@@ -1,0 +1,5 @@
+Name, Points, Hat
+Audrija, 600, Crown
+Krishna, 590, Baseball
+Joe, 150, Cowboy
+Terry, 100, Sombrero

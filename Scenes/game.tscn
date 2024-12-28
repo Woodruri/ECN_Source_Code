@@ -1,0 +1,35 @@
+[gd_scene load_steps=8 format=3 uid="uid://c2lvei4ypq3p4"]
+
+[ext_resource type="PackedScene" uid="uid://b2gripw0q0040" path="res://Scenes/Rocket.tscn" id="1_a3n0p"]
+[ext_resource type="Script" path="res://Scenes/game.gd" id="1_xq1da"]
+[ext_resource type="Script" path="res://Scenes/camera.gd" id="2_cd7in"]
+[ext_resource type="Script" path="res://Assets/rocket.gd" id="2_jykp6"]
+[ext_resource type="PackedScene" uid="uid://dm1h608ftloce" path="res://Scenes/blank_planet.tscn" id="2_mgfhn"]
+[ext_resource type="Script" path="res://Assets/blank_planet.gd" id="4_73uy1"]
+[ext_resource type="PackedScene" uid="uid://crsrusygvlswl" path="res://Scenes/employee_input.tscn" id="7_f8aex"]
+
+[node name="Game" type="Node2D"]
+script = ExtResource("1_xq1da")
+
+[node name="Camera" type="Camera2D" parent="."]
+zoom = Vector2(2, 2)
+script = ExtResource("2_cd7in")
+
+[node name="Rocket" parent="." instance=ExtResource("1_a3n0p")]
+position = Vector2(-118, 25)
+script = ExtResource("2_jykp6")
+
+[node name="Planet_1" parent="." instance=ExtResource("2_mgfhn")]
+scale = Vector2(4.28612, 4.28612)
+disable_mode = 2
+script = ExtResource("4_73uy1")
+
+[node name="EmployeeInput" parent="." instance=ExtResource("7_f8aex")]
+offset_left = -240.0
+offset_top = -104.0
+offset_right = -173.0
+offset_bottom = 90.0
+
+[connection signal="input_event" from="Planet_1" to="Planet_1" method="_on_input_event"]
+[connection signal="mouse_entered" from="Planet_1" to="Planet_1" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="Planet_1" to="Planet_1" method="_on_mouse_exited"]

@@ -1,0 +1,21 @@
+[gd_scene load_steps=4 format=3 uid="uid://b2gripw0q0040"]
+
+[ext_resource type="Texture2D" uid="uid://c1tjtm0fc0kiu" path="res://Textures/Rocket.png" id="1_k6m4a"]
+[ext_resource type="Texture2D" uid="uid://b4ulnpf4e8yi5" path="res://Textures/crown.png" id="2_ytpwa"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wlamk"]
+size = Vector2(18, 40)
+
+[node name="CharacterBody2D" type="CharacterBody2D"]
+
+[node name="Rocket Body" type="Sprite2D" parent="."]
+texture_filter = 1
+texture = ExtResource("1_k6m4a")
+
+[node name="RocketCollision" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_wlamk")
+
+[node name="Hat" type="Sprite2D" parent="."]
+position = Vector2(-19, -11)
+rotation = 4.71239
+texture = ExtResource("2_ytpwa")

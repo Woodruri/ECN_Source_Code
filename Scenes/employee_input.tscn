@@ -1,0 +1,38 @@
+[gd_scene load_steps=2 format=3 uid="uid://crsrusygvlswl"]
+
+[ext_resource type="Script" path="res://Assets/employee_input.gd" id="1_vo2eq"]
+
+[node name="EmployeeInput" type="VBoxContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_vo2eq")
+
+[node name="NameLabel" type="Label" parent="."]
+layout_mode = 2
+text = "Name"
+
+[node name="NameInput" type="LineEdit" parent="."]
+layout_mode = 2
+
+[node name="PointsLabel" type="Label" parent="."]
+layout_mode = 2
+text = "Points (must be integer)"
+
+[node name="PointsInput" type="LineEdit" parent="."]
+layout_mode = 2
+
+[node name="HatLabel" type="Label" parent="."]
+layout_mode = 2
+text = "Hat"
+
+[node name="HatInput" type="LineEdit" parent="."]
+layout_mode = 2
+
+[node name="SubmitButton" type="Button" parent="."]
+layout_mode = 2
+text = "Add to Leaderboard"
+
+[connection signal="pressed" from="SubmitButton" to="." method="_on_submit_button_pressed"]
