@@ -54,14 +54,13 @@ func close_menu():
 
 #Leaderboard specific functions
 
-func add_to_leaderboard(EmployeeName, points, hat):
-	leaderboard_data.append({ "name": EmployeeName, "points": points, "hat": hat })
+func add_to_leaderboard(EmployeeName, points, id, hat):
+	leaderboard_data.append({ "name": EmployeeName, "points": points, "id": id, "hat": hat })
 	sort_leaderboard()
 	
 
 #populates leaderboard with data
 func load_leaderboard(data_path):
-
 		
 	#read data file#Read path
 	if FileAccess.file_exists(data_path):

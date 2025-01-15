@@ -27,6 +27,7 @@ func _on_submit_employee_button_pressed() -> void:
 
 	# Add the employee to the leaderboard
 	print("Adding Employee: Name = %s, ID = %s Points = %d, Hat = %s" % [EmployeeName, points, hat])
+	get_parent().add_to_leaderboard(EmployeeName, points, id, hat)
 
 	# Clear the input fields after submission
 	name_input.text = ""

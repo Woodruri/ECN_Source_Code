@@ -9,9 +9,9 @@ func _process(delta: float) -> void:
 func _input(event):
 	pass
 
-func add_to_leaderboard(EmployeeName, points, hat):
+func add_to_leaderboard(EmployeeName, points,id, hat):
 	var planet = $Planet_1
-	planet.add_to_leaderboard(EmployeeName, points, hat)
+	planet.add_to_leaderboard(EmployeeName, points, id, hat)
 
 
 func _on_back_button_pressed() -> void:
