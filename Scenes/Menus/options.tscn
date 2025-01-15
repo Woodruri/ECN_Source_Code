@@ -1,0 +1,59 @@
+[gd_scene load_steps=2 format=3 uid="uid://b3bblu05g6t0o"]
+
+[ext_resource type="Script" path="res://Scenes/Menus/options.gd" id="1_fxy55"]
+
+[node name="Options" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_fxy55")
+
+[node name="OptionsMenuText" type="RichTextLabel" parent="."]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -331.5
+offset_right = 331.5
+offset_bottom = 40.0
+grow_horizontal = 2
+bbcode_enabled = true
+text = "[center] Options Menu [/center]"
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -220.5
+offset_top = -20.0
+offset_right = 220.5
+offset_bottom = 20.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="LoadDataButton" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "Load Data"
+
+[node name="CreatePlayerButton" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "Create Player"
+
+[node name="CreateECNButton" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "Create ECN"
+
+[node name="BackButton" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "Back"
+
+[connection signal="pressed" from="VBoxContainer/LoadDataButton" to="." method="_on_load_data_button_pressed"]
+[connection signal="pressed" from="VBoxContainer/CreatePlayerButton" to="." method="_on_create_player_button_pressed"]
+[connection signal="pressed" from="VBoxContainer/CreateECNButton" to="." method="_on_create_ecn_button_pressed"]
+[connection signal="pressed" from="VBoxContainer/BackButton" to="." method="_on_back_button_pressed"]

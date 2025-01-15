@@ -12,3 +12,7 @@ func _input(event):
 func add_to_leaderboard(EmployeeName, points, hat):
 	var planet = $Planet_1
 	planet.add_to_leaderboard(EmployeeName, points, hat)
+
+
+func _on_back_button_pressed() -> void:
+	get_tree().change_scene_to_file("res://Scenes/Menus/Menu.tscn")

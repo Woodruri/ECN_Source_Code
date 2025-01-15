@@ -1,0 +1,46 @@
+[gd_scene load_steps=3 format=3 uid="uid://dkeo0ii0cqmiw"]
+
+[ext_resource type="Script" path="res://Scenes/Menus/allocate_points.gd" id="1_3q47i"]
+[ext_resource type="PackedScene" uid="uid://iv0d3e5kq0do" path="res://Scenes/Menus/data_handler.tscn" id="2_h7iij"]
+
+[node name="AllocatePoints" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_3q47i")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -465.0
+offset_right = 465.0
+offset_bottom = 522.0
+grow_horizontal = 2
+
+[node name="EmployeeIDLabel" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "Enter Employee ID:"
+
+[node name="IDInput" type="LineEdit" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="EmpIdButton" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "Submit ID"
+
+[node name="ECNList" type="VBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="BackButton" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "Back"
+
+[node name="DataHandler" parent="." instance=ExtResource("2_h7iij")]
+
+[connection signal="pressed" from="VBoxContainer/EmpIdButton" to="." method="_on_emp_id_button_pressed"]
+[connection signal="pressed" from="VBoxContainer/BackButton" to="." method="_on_back_button_pressed"]

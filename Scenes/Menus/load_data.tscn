@@ -1,0 +1,78 @@
+[gd_scene load_steps=4 format=3 uid="uid://c1jkn2pj154q6"]
+
+[ext_resource type="Script" path="res://Scenes/Menus/load_data.gd" id="1_0ewsd"]
+[ext_resource type="PackedScene" uid="uid://iv0d3e5kq0do" path="res://Scenes/Menus/data_handler.tscn" id="2_8piak"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_5b1l2"]
+
+[node name="LoadData" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_0ewsd")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -464.5
+offset_right = 464.5
+offset_bottom = 435.0
+grow_horizontal = 2
+
+[node name="ExplainText" type="RichTextLabel" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 0
+bbcode_enabled = true
+text = "[center]The Data should be either a .xlsx or .csv file. Currently only supports .csv because microsoft makes nothing easy
+
+For now this is done manually and locally, but in the future it should be done using a remote server to avoid sharing any compromising information. 
+[/center]"
+fit_content = true
+
+[node name="FileLocationButton" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "Select file"
+
+[node name="FileSelected" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "Currently selected file: "
+label_settings = SubResource("LabelSettings_5b1l2")
+horizontal_alignment = 1
+
+[node name="LoadDataButton" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "Load Data"
+
+[node name="PrintDataButton" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "Print Data (debugging)"
+
+[node name="ClearDataButton" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "Clear Data (debugging)"
+
+[node name="BackButton" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "Back"
+
+[node name="FileDialogLoad" type="FileDialog" parent="."]
+title = "Open a File"
+initial_position = 4
+size = Vector2i(600, 400)
+ok_button_text = "Open"
+file_mode = 0
+filters = PackedStringArray("*.csv", "*.xlsx")
+
+[node name="DataHandler" parent="." instance=ExtResource("2_8piak")]
+
+[connection signal="pressed" from="VBoxContainer/FileLocationButton" to="." method="_on_file_location_button_pressed"]
+[connection signal="pressed" from="VBoxContainer/LoadDataButton" to="." method="_on_load_data_button_pressed"]
+[connection signal="pressed" from="VBoxContainer/PrintDataButton" to="." method="_on_print_data_button_pressed"]
+[connection signal="pressed" from="VBoxContainer/ClearDataButton" to="." method="_on_clear_data_button_pressed"]
+[connection signal="pressed" from="VBoxContainer/BackButton" to="." method="_on_back_button_pressed"]
+[connection signal="file_selected" from="FileDialogLoad" to="." method="_on_file_dialog_load_file_selected"]

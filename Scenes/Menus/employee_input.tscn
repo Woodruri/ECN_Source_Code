@@ -24,6 +24,13 @@ text = "Points (must be integer)"
 [node name="PointsInput" type="LineEdit" parent="."]
 layout_mode = 2
 
+[node name="IDLabel" type="Label" parent="."]
+layout_mode = 2
+text = "ID"
+
+[node name="IDInput" type="LineEdit" parent="."]
+layout_mode = 2
+
 [node name="HatLabel" type="Label" parent="."]
 layout_mode = 2
 text = "Hat"
@@ -33,6 +40,6 @@ layout_mode = 2
 
 [node name="SubmitButton" type="Button" parent="."]
 layout_mode = 2
-text = "Add to Leaderboard"
+text = "Save"
 
-[connection signal="pressed" from="SubmitButton" to="." method="_on_submit_button_pressed"]
+[connection signal="pressed" from="SubmitButton" to="." method="_on_submit_employee_button_pressed"]

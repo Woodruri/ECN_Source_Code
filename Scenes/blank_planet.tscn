@@ -1,7 +1,7 @@
 [gd_scene load_steps=6 format=3 uid="uid://dm1h608ftloce"]
 
 [ext_resource type="Script" path="res://Assets/planet.gd" id="1_nros7"]
-[ext_resource type="Texture2D" uid="uid://ctv76tpy5v434" path="res://Textures/planet.png" id="1_ospcq"]
+[ext_resource type="Texture2D" uid="uid://rnyd76q6gidw" path="res://Textures/planet.png" id="1_ospcq"]
 [ext_resource type="Script" path="res://Assets/leaderboard.gd" id="2_t2amk"]
 [ext_resource type="Script" path="res://Assets/leaderboard_list.gd" id="3_pi3yc"]
 

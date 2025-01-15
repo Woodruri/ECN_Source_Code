@@ -1,4 +1,6 @@
-[gd_scene load_steps=2 format=3 uid="uid://dw0eup3geygx5"]
+[gd_scene load_steps=3 format=3 uid="uid://dw0eup3geygx5"]
+
+[ext_resource type="Script" path="res://Scenes/Menus/menu.gd" id="1_7bngu"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_vgwe0"]
 bg_color = Color(1, 1, 1, 1)
@@ -16,6 +18,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+script = ExtResource("1_7bngu")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
 layout_mode = 1
@@ -54,7 +57,7 @@ size_flags_vertical = 3
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_font_sizes/font_size = 35
 theme_override_styles/normal = SubResource("StyleBoxFlat_vgwe0")
-text = "Leaderboard"
+text = "Leaderboard (DNE)"
 
 [node name="ShopButton" type="Button" parent="VBoxContainer"]
 layout_mode = 2
@@ -62,7 +65,7 @@ size_flags_vertical = 3
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_font_sizes/font_size = 35
 theme_override_styles/normal = SubResource("StyleBoxFlat_vgwe0")
-text = "Shop"
+text = "Shop (DNE)"
 
 [node name="CustomizeShipButton" type="Button" parent="VBoxContainer"]
 layout_mode = 2
@@ -70,7 +73,7 @@ size_flags_vertical = 3
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_font_sizes/font_size = 35
 theme_override_styles/normal = SubResource("StyleBoxFlat_vgwe0")
-text = "Customize Ship"
+text = "Customize Ship (DNE)"
 
 [node name="OptionsButton" type="Button" parent="VBoxContainer"]
 layout_mode = 2
@@ -87,3 +90,11 @@ theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_font_sizes/font_size = 35
 theme_override_styles/normal = SubResource("StyleBoxFlat_vgwe0")
 text = "Exit"
+
+[connection signal="pressed" from="VBoxContainer/StartButton" to="." method="_on_start_button_pressed"]
+[connection signal="pressed" from="VBoxContainer/AllocatePointsButton" to="." method="_on_allocate_points_button_pressed"]
+[connection signal="pressed" from="VBoxContainer/LeaderboardButton" to="." method="_on_leaderboard_button_pressed"]
+[connection signal="pressed" from="VBoxContainer/ShopButton" to="." method="_on_shop_button_pressed"]
+[connection signal="pressed" from="VBoxContainer/CustomizeShipButton" to="." method="_on_customize_ship_button_pressed"]
+[connection signal="pressed" from="VBoxContainer/OptionsButton" to="." method="_on_options_button_pressed"]
+[connection signal="pressed" from="VBoxContainer/ExitButton" to="." method="_on_exit_button_pressed"]

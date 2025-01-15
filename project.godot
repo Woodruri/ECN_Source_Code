@@ -11,9 +11,17 @@ config_version=5
 [application]
 
 config/name="ECN_Game_Space"
-run/main_scene="res://Scenes/game.tscn"
+run/main_scene="res://Scenes/Menus/Menu.tscn"
 config/features=PackedStringArray("4.3", "Forward Plus")
 config/icon="res://Rocket.png"
+
+[display]
+
+window/subwindows/embed_subwindows=false
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/godot-sqlite/plugin.cfg")
 
 [rendering]
 

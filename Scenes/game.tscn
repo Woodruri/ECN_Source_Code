@@ -6,7 +6,7 @@
 [ext_resource type="Script" path="res://Assets/rocket.gd" id="2_jykp6"]
 [ext_resource type="PackedScene" uid="uid://dm1h608ftloce" path="res://Scenes/blank_planet.tscn" id="2_mgfhn"]
 [ext_resource type="Script" path="res://Assets/blank_planet.gd" id="4_73uy1"]
-[ext_resource type="PackedScene" uid="uid://crsrusygvlswl" path="res://Scenes/employee_input.tscn" id="7_f8aex"]
+[ext_resource type="PackedScene" uid="uid://crsrusygvlswl" path="res://Scenes/Menus/employee_input.tscn" id="7_f8aex"]
 
 [node name="Game" type="Node2D"]
 script = ExtResource("1_xq1da")
@@ -30,6 +30,17 @@ offset_top = -104.0
 offset_right = -173.0
 offset_bottom = 90.0
 
+[node name="BackButton" type="Button" parent="."]
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 243.0
+offset_top = -162.0
+offset_right = 288.0
+offset_bottom = -131.0
+grow_horizontal = 2
+text = "Back"
+
 [connection signal="input_event" from="Planet_1" to="Planet_1" method="_on_input_event"]
 [connection signal="mouse_entered" from="Planet_1" to="Planet_1" method="_on_mouse_entered"]
 [connection signal="mouse_exited" from="Planet_1" to="Planet_1" method="_on_mouse_exited"]
+[connection signal="pressed" from="BackButton" to="." method="_on_back_button_pressed"]
