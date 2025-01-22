@@ -24,6 +24,7 @@ func _ready() -> void:
 func _on_mouse_entered() -> void:
 	scale = scale * 1.05 #Scale up slightly to add feedback
 	modulate = Color(1, 1, 0.85, 1)  # Add yellow-ish color 
+
 func _on_mouse_exited() -> void:
 	scale = original_scale
 	modulate = Color(1, 1, 1, 1)  # Restore original color.

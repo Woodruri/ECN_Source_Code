@@ -4,9 +4,6 @@ extends Control
 @onready var fd_load: FileDialog = $FileDialogLoad
 @onready var file_selected: Label = $VBoxContainer/FileSelected
 @onready var load_data_button: Button = $VBoxContainer/LoadDataButton
-@onready var data_handler: Node = $DataHandler
-
-var database_path: String = "user://parsed_data.json"
 
 var selected_file_path:String = ""
 
@@ -54,11 +51,11 @@ func _on_load_data_button_pressed() -> void:
 		return
 
 	print("Attempting to load the file: ", selected_file_path)
-	data_handler.parse_data(selected_file_path)
+	DataHandler.parse_data(selected_file_path)
 
 
 func _on_print_data_button_pressed() -> void:
-	data_handler.print_data()
+	DataHandler.print_data()
 
 
 func _on_back_button_pressed() -> void:
@@ -66,4 +63,4 @@ func _on_back_button_pressed() -> void:
 
 
 func _on_clear_data_button_pressed() -> void:
-	data_handler.reset_data()
+	DataHandler.reset_data()

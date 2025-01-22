@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://bpf5vqpr306f2"]
 
-[ext_resource type="Script" path="res://Assets/leaderboard.gd" id="1_rnj0q"]
+[ext_resource type="Script" path="res://Scenes/Menus/leaderboard.gd" id="1_j2ahf"]
 
 [node name="Leaderboard" type="Control"]
 layout_mode = 3
@@ -9,20 +9,47 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("1_rnj0q")
+script = ExtResource("1_j2ahf")
 
-[node name="MarginContainer" type="MarginContainer" parent="."]
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
+[node name="LeaderboardLabel" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -50.0
+offset_right = 50.0
+offset_bottom = 23.0
+grow_horizontal = 2
+text = "Leaderboard"
+horizontal_alignment = 1
 
-[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+[node name="LeaderboardBox" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -353.5
+offset_top = -204.0
+offset_right = 353.5
+offset_bottom = 204.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="LoadLeaderboardButton" type="Button" parent="LeaderboardBox"]
 layout_mode = 2
+text = "Load Leaderboard"
 
-[node name="LeaderboardList" type="ItemList" parent="MarginContainer/VBoxContainer"]
-layout_mode = 2
+[node name="BackButton" type="Button" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -45.0
+offset_bottom = 31.0
+grow_horizontal = 0
+text = "Back"
 
-[node name="Exit" type="Button" parent="MarginContainer/VBoxContainer"]
-layout_mode = 2
-
-[connection signal="pressed" from="MarginContainer/VBoxContainer/Exit" to="." method="_on_exit_pressed"]
+[connection signal="pressed" from="LeaderboardBox/LoadLeaderboardButton" to="." method="_on_load_leaderboard_button_pressed"]
+[connection signal="pressed" from="BackButton" to="." method="_on_back_button_pressed"]

@@ -47,7 +47,15 @@ text = "Create Player"
 
 [node name="CreateECNButton" type="Button" parent="VBoxContainer"]
 layout_mode = 2
-text = "Create ECN"
+text = "Create ECN (DNE)"
+
+[node name="AdjustEmployee" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "Adjust Employee"
+
+[node name="AdjustWorldsButton" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "Adjust Worlds (DNE)"
 
 [node name="BackButton" type="Button" parent="VBoxContainer"]
 layout_mode = 2
@@ -56,4 +64,6 @@ text = "Back"
 [connection signal="pressed" from="VBoxContainer/LoadDataButton" to="." method="_on_load_data_button_pressed"]
 [connection signal="pressed" from="VBoxContainer/CreatePlayerButton" to="." method="_on_create_player_button_pressed"]
 [connection signal="pressed" from="VBoxContainer/CreateECNButton" to="." method="_on_create_ecn_button_pressed"]
+[connection signal="pressed" from="VBoxContainer/AdjustEmployee" to="." method="_on_adjust_employee_pressed"]
+[connection signal="pressed" from="VBoxContainer/AdjustWorldsButton" to="." method="_on_adjust_worlds_button_pressed"]
 [connection signal="pressed" from="VBoxContainer/BackButton" to="." method="_on_back_button_pressed"]

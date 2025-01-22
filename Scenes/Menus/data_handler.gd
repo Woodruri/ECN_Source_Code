@@ -1,15 +1,23 @@
 extends Node
 
+#This script covers almost all data I/O between the game and the backend
+
 @export var employees_path: String = "res://data/persistent_storage/employees.json"
 @export var reports_path: String = "res://data/persistent_storage/reports.json"
 @export var relationships_path: String = "res://data/persistent_storage/relationships.json"
 @export var leaderboard_path: String = "res://data/persistent_storage/leaderboard.json"
 @export var points_allocated_path: String = "res://data/persistent_storage/points_allocated.json"
+@export var materials_path: String = "res://data/persistent_storage/materials.json"
 
 #storage for employees and reports
 var employees = {}
 var reports = {}
 var relationships = {}
+var points_allocated = {}
+var materials = {}
+
+#Global user_id, this imitates if the user were to be logged in
+var user_id: String = "lorum"
 
 #verifies selected file
 func parse_data(file_path: String):
@@ -110,9 +118,11 @@ func parse_csv(file_path: String):
 		save_dictionary_to_file(reports, reports_path)
 		save_dictionary_to_file(relationships, relationships_path)
 		
+#used to streamline getting the relationship key
 func get_relationship_key(employee_id: String, report_id: String):
 	return employee_id + ":" + report_id
 	
+#generic function to save any dictionary to its corresponding file, be wise with this function
 func save_dictionary_to_file(data_dictionary: Dictionary, file_path: String):
 	var file = FileAccess.open(file_path, FileAccess.WRITE)
 	
@@ -123,6 +133,7 @@ func save_dictionary_to_file(data_dictionary: Dictionary, file_path: String):
 	var jstr = JSON.stringify(data_dictionary)
 	file.store_line(jstr)
 
+#loads a file into a dictionary, be careful with this
 func load_import_data(data_dictionary: Dictionary, file_path: String):
 	#Loads existing data from file
 	
@@ -152,10 +163,12 @@ func load_import_data(data_dictionary: Dictionary, file_path: String):
 					data_dictionary[key] = parsed_line[key]
 	print("Data loaded successfully from: ", file_path)
 
+
 func print_data():
 	print("reports:", reports)
 	print("employees:", employees)
 	print("relationships:", relationships)
+	print("points allocated:", points_allocated)
 
 func load_all_data():
 	print("Loading all data...")
@@ -202,6 +215,35 @@ func store_relationship(employee_id: String, report_id: String, start_date, clos
 	
 	save_dictionary_to_file(relationships, relationships_path)
 
+func store_materials(employee_id: String, gas: float, scrap: int):
+	#used to save an employee's materials
+	load_import_data(materials, materials_path)
+	materials[employee_id] = {
+		"gas" : gas,
+		"scrap" : scrap
+	}
+	save_dictionary_to_file(materials, materials_path)
+
+func store_allocated_points(employee_id: String, report_id: String, points_dict: Dictionary):
+	#used to save a point allocation event from the point allocation page
+	#format is allocated_points[relationship_key] = {reciever_id1 : points given, reciever_id2 : points given, ...}
+	load_import_data(points_allocated, points_allocated_path)
+	var relationship_key = get_relationship_key(employee_id, report_id)
+	points_allocated[relationship_key] = points_dict
+	save_dictionary_to_file(points_allocated, points_allocated_path)
+
+func retrieve_materials(employee_id: String):
+	#retrieves materials for a given employee
+	#format is a dictionary with the name of materials followed by their quantities
+	
+	load_import_data(materials, materials_path)
+	
+	if materials[employee_id]:
+		return materials[employee_id]
+	else:
+		return {} 
+	
+
 func calculate_leaderboard():
 	#takes all of our employees, and makes an ordered list of all employees according to their scores
 	pass
@@ -235,15 +277,54 @@ func reset_data():
 	employees = {}
 	reports = {}
 	relationships = {}
+	points_allocated = {}
+	materials = {}
 	save_dictionary_to_file({}, employees_path)
 	save_dictionary_to_file({}, reports_path)
 	save_dictionary_to_file({}, relationships_path)
 	save_dictionary_to_file({}, leaderboard_path)
 	save_dictionary_to_file({}, points_allocated_path)
+	save_dictionary_to_file({}, materials_path)
 	
 
-func load_leaderboard():
+func get_leaderboard(quantity: int):
+	#returns a list of top 'quantity' users by score
 	pass
 
 func get_employees_from_ecn(ecn_id: String):
-	pass
+	#takes in a string that is the ecn ID, and returns a list of employee IDs that worked on that ECN
+	# returns [] if no employees are found
+	
+	#loading our stored data
+	load_import_data(reports, reports_path)
+	
+	if ecn_id not in reports:
+		return []
+	
+	var report_data = reports[ecn_id]
+	var emp_list = []
+	
+	# gets a list of each employee on a given ecn
+	#report_data["employees"] only gets the IDs
+	for item in report_data["employees"]:
+		emp_list.append(item)
+	
+	return emp_list
+
+func get_employee_from_id(employee_id: String):
+	#pass in an employee id to get the employee object
+	#horribly inefficient algorithm as this opens and closes the file for each employee, but memory is abundant and life is short
+	
+	load_import_data(employees, employees_path)
+	if employees[employee_id]:
+		return employees[employee_id]
+	else:
+		return false
+
+func set_user(employee_id: String):
+	#sets the global user_ID to the given string
+	user_id = employee_id
+
+func get_user_id():
+	#a getter, in my python???
+	return user_id

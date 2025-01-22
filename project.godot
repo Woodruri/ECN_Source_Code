@@ -15,6 +15,10 @@ run/main_scene="res://Scenes/Menus/Menu.tscn"
 config/features=PackedStringArray("4.3", "Forward Plus")
 config/icon="res://Rocket.png"
 
+[autoload]
+
+DataHandler="*res://Scenes/Menus/data_handler.gd"
+
 [display]
 
 window/subwindows/embed_subwindows=false
