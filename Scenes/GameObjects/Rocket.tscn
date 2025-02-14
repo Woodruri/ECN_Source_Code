@@ -1,12 +1,14 @@
-[gd_scene load_steps=4 format=3 uid="uid://b2gripw0q0040"]
+[gd_scene load_steps=5 format=3 uid="uid://b2gripw0q0040"]
 
 [ext_resource type="Texture2D" uid="uid://dbh0l46al5c16" path="res://Textures/Rocket.png" id="1_k6m4a"]
+[ext_resource type="Script" path="res://Scenes/GameObjects/rocket.gd" id="1_rg3p3"]
 [ext_resource type="Texture2D" uid="uid://b20qdpbrlmtt5" path="res://Textures/crown.png" id="2_ytpwa"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_wlamk"]
 size = Vector2(18, 40)
 
 [node name="CharacterBody2D" type="CharacterBody2D"]
+script = ExtResource("1_rg3p3")
 
 [node name="Rocket Body" type="Sprite2D" parent="."]
 texture_filter = 1
@@ -19,3 +21,10 @@ shape = SubResource("RectangleShape2D_wlamk")
 position = Vector2(-19, -11)
 rotation = 4.71239
 texture = ExtResource("2_ytpwa")
+
+[node name="NameLabel" type="Label" parent="."]
+offset_left = -20.0
+offset_top = 23.0
+offset_right = 20.0
+offset_bottom = 46.0
+text = "Filler"

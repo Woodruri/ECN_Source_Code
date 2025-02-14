@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=3 uid="uid://dkeo0ii0cqmiw"]
 
 [ext_resource type="Script" path="res://Scenes/Menus/allocate_points.gd" id="1_3q47i"]
-[ext_resource type="PackedScene" uid="uid://iv0d3e5kq0do" path="res://Scenes/Menus/data_handler.tscn" id="2_h7iij"]
+[ext_resource type="PackedScene" uid="uid://iv0d3e5kq0do" path="res://Scenes/DataScenes/data_handler.tscn" id="2_h7iij"]
 
 [node name="AllocatePoints" type="Control"]
 layout_mode = 3

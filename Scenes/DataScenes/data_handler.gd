@@ -2,22 +2,72 @@ extends Node
 
 #This script covers almost all data I/O between the game and the backend
 
+#information regarding data the uglier data persistence
 @export var employees_path: String = "res://data/persistent_storage/employees.json"
 @export var reports_path: String = "res://data/persistent_storage/reports.json"
 @export var relationships_path: String = "res://data/persistent_storage/relationships.json"
 @export var leaderboard_path: String = "res://data/persistent_storage/leaderboard.json"
 @export var points_allocated_path: String = "res://data/persistent_storage/points_allocated.json"
-@export var materials_path: String = "res://data/persistent_storage/materials.json"
 
-#storage for employees and reports
-var employees = {}
-var reports = {}
-var relationships = {}
-var points_allocated = {}
-var materials = {}
+#information that pertains traversal of the world map/resources
+@export var materials_path: String = "res://data/persistent_storage/materials.json"
+@export var rockets_path: String = "res://data/persistent_storage/rockets.json"
+@export var rocket_positions_path: String = "res://data/persistent_storage/rocket_positions.json"
+
+
+###################################################### DICTIONARIES ##################################################################
+
+
+#dictionaries for memory access to this info
+var employees: Dictionary = {}
+'''
+employee_id: 
+			"assignee_name": Str
+			"assignee_id": Str
+'''
+var reports: Dictionary = {}
+'''
+report_id: 
+			"id":: Str
+			"RV_executor": Str
+			"r2_count": int
+'''
+var relationships: Dictionary = {}
+'''
+relationship_key:
+			"employee_id": Str
+			"report_id": Str
+			"start_date": Str
+			"end_date": Str
+'''
+var points_allocated: Dictionary = {}
+'''
+'''
+
+#traversal dicts
+var materials: Dictionary = {}
+'''
+employee_id:
+			"scrap": int
+			"gas": int
+'''
+var rockets: Dictionary = {}
+'''
+employee_id:
+			"planet_id": Str
+'''
+var rocket_positions: Dictionary = {}
+'''
+planet_id:
+			"employees": list of employee_ids
+'''
 
 #Global user_id, this imitates if the user were to be logged in
 var user_id: String = "lorum"
+
+
+####################################################### PARSING FUNCS #################################################################
+
 
 #verifies selected file
 func parse_data(file_path: String):
@@ -117,10 +167,9 @@ func parse_csv(file_path: String):
 		save_dictionary_to_file(employees, employees_path)
 		save_dictionary_to_file(reports, reports_path)
 		save_dictionary_to_file(relationships, relationships_path)
-		
-#used to streamline getting the relationship key
-func get_relationship_key(employee_id: String, report_id: String):
-	return employee_id + ":" + report_id
+
+
+################################################### STORAGE AND FILE MANIPULATION #####################################################################
 	
 #generic function to save any dictionary to its corresponding file, be wise with this function
 func save_dictionary_to_file(data_dictionary: Dictionary, file_path: String):
@@ -163,7 +212,6 @@ func load_import_data(data_dictionary: Dictionary, file_path: String):
 					data_dictionary[key] = parsed_line[key]
 	print("Data loaded successfully from: ", file_path)
 
-
 func print_data():
 	print("reports:", reports)
 	print("employees:", employees)
@@ -177,15 +225,16 @@ func load_all_data():
 	load_import_data(relationships, relationships_path)
 	print("Data successfully loaded.")
 
-func store_employee(name: String, ID: String):
+################################################ STORED OBJECTS ########################################################################
+
+func store_employee(employee_name: String, ID: String):
 	# Extremely inefficient way of handling this, 
 	# it's kinda like going to the grocery store, filling your cart, and then only purchasing a single item every time that you want to buy something
 	load_import_data(employees, employees_path)
 	
 	employees[ID] = {
-		"assignee_name" : name,
+		"assignee_name" : employee_name,
 		"assignee_id" : ID,
-		#"personnel_number" : import_data["personnel_number"]
 	}
 	
 	save_dictionary_to_file(employees, employees_path)
@@ -200,6 +249,10 @@ func store_report(ID: String, executor: String, r2_count: int):
 		}
 		
 	save_dictionary_to_file(employees, employees_path)
+
+#used to streamline getting the relationship key
+func get_relationship_key(employee_id: String, report_id: String):
+	return employee_id + ":" + report_id
 
 func store_relationship(employee_id: String, report_id: String, start_date, close_date):
 	load_import_data(relationships, relationships_path)
@@ -232,21 +285,67 @@ func store_allocated_points(employee_id: String, report_id: String, points_dict:
 	points_allocated[relationship_key] = points_dict
 	save_dictionary_to_file(points_allocated, points_allocated_path)
 
-func retrieve_materials(employee_id: String):
+func reset_data():
+	#used to wipe all the files, useful for debugging
+	employees = {}
+	reports = {}
+	relationships = {}
+	points_allocated = {}
+	materials = {}
+	save_dictionary_to_file({}, employees_path)
+	save_dictionary_to_file({}, reports_path)
+	save_dictionary_to_file({}, relationships_path)
+	save_dictionary_to_file({}, leaderboard_path)
+	save_dictionary_to_file({}, points_allocated_path)
+	save_dictionary_to_file({}, materials_path)
+
+################################################# RETRIEVAL #######################################################################
+
+func get_user_id() -> String:
+	return user_id
+
+func get_rocket_data(employee_id: String):
+	#retrieves rocket info for a given employee
+	#returns a dictionary with all of the rocket data 
+	
+	load_import_data(rockets, rockets_path)
+	
+	if employee_id in rockets:
+		return rockets[employee_id]
+	else:
+		print("No rocket data for %s" % employee_id)
+		return {}
+
+func get_rocket_position(employee_id: String):
+	#takes emp_id and returns a string of the ID of the planet that the rocket belongs on
+	
+	#TODO make somthing real here, temp sol'n for now
+	return "Planet_1"
+
+func get_rockets_on_planet(planet_id: String) -> Array:
+	load_import_data(rocket_positions, rocket_positions_path)
+	
+	var planet_rockets = []
+	for rocket_id in rocket_positions:
+		if rocket_positions[rocket_id].get("planet_id") == planet_id:
+			planet_rockets.append(rocket_id)
+	
+	return planet_rockets
+
+func get_user_materials(employee_id: String):
 	#retrieves materials for a given employee
-	#format is a dictionary with the name of materials followed by their quantities
+	#returns a dictionary with the name of materials and quantities
+
 	
 	load_import_data(materials, materials_path)
 	
-	if materials[employee_id]:
+	if employee_id in materials:
+		print("Material data for %s loaded" % employee_id)
+		print(materials[employee_id])
 		return materials[employee_id]
 	else:
+		print("No material data for %s" % employee_id)
 		return {} 
-	
-
-func calculate_leaderboard():
-	#takes all of our employees, and makes an ordered list of all employees according to their scores
-	pass
 
 func get_active_ecns(employee_id: String):
 	#takes in a string that is the employee ID, and returns a list of ECN IDs for all ECNs that employee has active
@@ -271,25 +370,6 @@ func get_active_ecns(employee_id: String):
 			ECN_list.append(item)
 	
 	return ECN_list
-
-func reset_data():
-	#used to wipe all the files, useful for debugging
-	employees = {}
-	reports = {}
-	relationships = {}
-	points_allocated = {}
-	materials = {}
-	save_dictionary_to_file({}, employees_path)
-	save_dictionary_to_file({}, reports_path)
-	save_dictionary_to_file({}, relationships_path)
-	save_dictionary_to_file({}, leaderboard_path)
-	save_dictionary_to_file({}, points_allocated_path)
-	save_dictionary_to_file({}, materials_path)
-	
-
-func get_leaderboard(quantity: int):
-	#returns a list of top 'quantity' users by score
-	pass
 
 func get_employees_from_ecn(ecn_id: String):
 	#takes in a string that is the ecn ID, and returns a list of employee IDs that worked on that ECN
@@ -321,10 +401,33 @@ func get_employee_from_id(employee_id: String):
 	else:
 		return false
 
-func set_user(employee_id: String):
-	#sets the global user_ID to the given string
-	user_id = employee_id
+############################################### LEADERBOARD STUFF #########################################################################
 
-func get_user_id():
-	#a getter, in my python???
-	return user_id
+
+func calculate_leaderboard():
+	#takes all of our employees, and makes an ordered list of all employees according to their scores
+	pass
+	
+
+func get_leaderboard(quantity: int):
+	#returns a list of top 'quantity' users by score
+	pass
+
+func get_planet_leaderboard(planet: String, quantity: int):
+	# Gets the top "quantity" people on the leaderboard from planet "planet"
+	#returns an array of the top quantity users sorted by rank
+
+	var example_data = []
+	example_data.append({"rank": 1, "name": "tim", "points": 420})
+	example_data.append({"rank": 2, "name": "larry", "points": 400})
+	example_data.append({"rank": 5, "name": "tom", "points": 300})
+
+	#sort the data by rank before sending it out
+	example_data.sort_custom(func(a, b): return a["rank"] < b["rank"])
+
+	
+	return example_data
+
+
+
+#TODO Be careful for doubled up ids

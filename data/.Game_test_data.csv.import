@@ -1,0 +1,17 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://sn56ehjjgljq"
+
+[deps]
+
+files=["res://data/.Game_test_data.Assignee.translation", "res://data/.Game_test_data.Userid.translation", "res://data/.Game_test_data.Personel.translation", "res://data/.Game_test_data.Organizational.translation", "res://data/.Game_test_data.Assignee Email.translation", "res://data/.Game_test_data.RV Executor.translation", "res://data/.Game_test_data.Planned Review Start date.translation", "res://data/.Game_test_data.Closed on.translation", "res://data/.Game_test_data.R2.translation"]
+
+source_file="res://data/.Game_test_data.csv"
+dest_files=["res://data/.Game_test_data.Assignee.translation", "res://data/.Game_test_data.Userid.translation", "res://data/.Game_test_data.Personel.translation", "res://data/.Game_test_data.Organizational.translation", "res://data/.Game_test_data.Assignee Email.translation", "res://data/.Game_test_data.RV Executor.translation", "res://data/.Game_test_data.Planned Review Start date.translation", "res://data/.Game_test_data.Closed on.translation", "res://data/.Game_test_data.R2.translation"]
+
+[params]
+
+compress=true
+delimiter=0

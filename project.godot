@@ -17,7 +17,8 @@ config/icon="res://Rocket.png"
 
 [autoload]
 
-DataHandler="*res://Scenes/Menus/data_handler.gd"
+DataHandler="*res://Scenes/DataScenes/data_handler.gd"
+ServerDbHandler="*res://Scenes/DataScenes/server_db_handler.gd"
 
 [display]
 

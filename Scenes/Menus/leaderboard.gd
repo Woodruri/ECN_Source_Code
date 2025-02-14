@@ -15,6 +15,10 @@ func _on_load_leaderboard_button_pressed() -> void:
 	#load a data structure with leaderboard, and then populate this VBox with that data
 	var leaderboard = DataHandler.get_leaderboard(10)
 	
+	if not leaderboard:
+		print("leaderboard returned empty, please load data first")
+		return
+	
 	# Want it to be sorted s.t. [0] is the top scorer, [1] is 2, etc.
 	for elem in leaderboard:
 		print(elem)

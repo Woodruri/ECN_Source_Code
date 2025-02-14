@@ -1,13 +1,13 @@
 [gd_scene load_steps=4 format=3 uid="uid://dm1h608ftloce"]
 
-[ext_resource type="Script" path="res://Assets/planet.gd" id="1_nros7"]
 [ext_resource type="Texture2D" uid="uid://rnyd76q6gidw" path="res://Textures/planet.png" id="1_ospcq"]
+[ext_resource type="Script" path="res://Scenes/GameObjects/blank_planet.gd" id="1_x8akc"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_61swb"]
 radius = 15.0
 
 [node name="Planet" type="Area2D"]
-script = ExtResource("1_nros7")
+script = ExtResource("1_x8akc")
 
 [node name="PlanetSprite" type="Sprite2D" parent="."]
 texture = ExtResource("1_ospcq")
@@ -43,3 +43,7 @@ select_mode = 1
 [node name="CloseButton" type="Button" parent="Leaderboard/MarginContainer/VBoxContainer"]
 layout_mode = 2
 text = "Close"
+
+[connection signal="input_event" from="." to="." method="_on_input_event"]
+[connection signal="mouse_entered" from="." to="." method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="." to="." method="_on_mouse_exited"]
