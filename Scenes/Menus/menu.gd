@@ -7,7 +7,7 @@ func _ready() -> void:
 
 
 func _on_start_button_pressed() -> void:
-	get_tree().change_scene_to_file("res://Scenes/game.tscn")
+	get_tree().change_scene_to_file("res://Scenes/GameObjects/game.tscn")
 
 
 func _on_allocate_points_button_pressed() -> void:
@@ -19,8 +19,7 @@ func _on_leaderboard_button_pressed() -> void:
 
 
 func _on_shop_button_pressed() -> void:
-	#TODO get_tree().change_scene_to_file("res://Scenes/game.tscn")
-	pass
+	get_tree().change_scene_to_file("res://Scenes/Menus/shop.tscn")
 
 
 func _on_customize_ship_button_pressed() -> void:

@@ -8,6 +8,7 @@ extends Node
 @export var relationships_path: String = "res://data/persistent_storage/relationships.json"
 @export var leaderboard_path: String = "res://data/persistent_storage/leaderboard.json"
 @export var points_allocated_path: String = "res://data/persistent_storage/points_allocated.json"
+@export var upgrades_path: String = "res://data/persistent_storage/upgrades.json"
 
 #information that pertains traversal of the world map/resources
 @export var materials_path: String = "res://data/persistent_storage/materials.json"
@@ -65,6 +66,13 @@ planet_id:
 #Global user_id, this imitates if the user were to be logged in
 var user_id: String = "lorum"
 
+var upgrades: Dictionary = {}
+'''
+user_id:
+	"gas_efficiency": float
+	"point_multiplier": float
+'''
+
 
 ####################################################### PARSING FUNCS #################################################################
 
@@ -111,7 +119,7 @@ func parse_csv(file_path: String):
 			reports[import_data["report_id"]] = {
 				"id": import_data["report_id"], 
 				"RV_executor": import_data["RV_executor"],
-				"r2_count": import_data["r2_count"],
+				"r2_count": int(import_data["r2_count"]),
 				"employees" : [import_data["assignee_id"]],
 				}
 		else:
@@ -318,9 +326,10 @@ func get_rocket_data(employee_id: String):
 
 func get_rocket_position(employee_id: String):
 	#takes emp_id and returns a string of the ID of the planet that the rocket belongs on
-	
-	#TODO make somthing real here, temp sol'n for now
-	return "Planet_1"
+	load_import_data(rockets, rockets_path)
+	if employee_id in rockets:
+		return rockets[employee_id].get("planet_id", "Planet_1")
+	return "Planet_1"  # Default to Planet_1 if no position found
 
 func get_rockets_on_planet(planet_id: String) -> Array:
 	load_import_data(rocket_positions, rocket_positions_path)
@@ -403,31 +412,162 @@ func get_employee_from_id(employee_id: String):
 
 ############################################### LEADERBOARD STUFF #########################################################################
 
-
 func calculate_leaderboard():
-	#takes all of our employees, and makes an ordered list of all employees according to their scores
-	pass
+	# Load all necessary data
+	load_import_data(employees, employees_path)
+	load_import_data(points_allocated, points_allocated_path)
 	
+	var leaderboard_data = []
+	
+	# Calculate scores for each employee
+	for employee_id in employees.keys():
+		var score = calculate_employee_score(employee_id)
+		var name = employees[employee_id].get("assignee_name", "Unknown")
+		
+		leaderboard_data.append({
+			"id": employee_id,
+			"name": name,
+			"points": score
+		})
+	
+	# Sort by points
+	leaderboard_data.sort_custom(func(a, b): return a["points"] > b["points"])
+	
+	# Add ranks
+	for i in range(leaderboard_data.size()):
+		leaderboard_data[i]["rank"] = i + 1
+	
+	# Save to file
+	var file = FileAccess.open(leaderboard_path, FileAccess.WRITE)
+	file.store_string(JSON.stringify(leaderboard_data))
+	file.close()
+	
+	return leaderboard_data
+
+func calculate_employee_score(employee_id: String) -> int:
+	var base_score = 0
+	
+	# Add points from points_allocated
+	if points_allocated.has(employee_id):
+		base_score += points_allocated[employee_id].get("total_points", 0)
+	
+	# Add points from reports
+	load_import_data(relationships, relationships_path)
+	load_import_data(reports, reports_path)
+	
+	for relationship in relationships.values():
+		if relationship["employee_id"] == employee_id:
+			var report_id = relationship["report_id"]
+			if reports.has(report_id):
+				var r2_count = reports[report_id].get("r2_count", 0)
+				# Convert to int if it's a string
+				if r2_count is String:
+					r2_count = int(r2_count)
+				base_score += r2_count * 10  # 10 points per r2
+	
+	# Apply point multiplier
+	var upgrades = get_user_upgrades(employee_id)
+	var multiplier = upgrades.get("point_multiplier", 1.0)
+	
+	return ceil(base_score * multiplier)
+
+func generate_fake_leaderboard_entries(count: int) -> Array:
+	var fake_entries = []
+	for i in range(count):
+		fake_entries.append({
+			"rank": i + 1,
+			"name": "Player_%d" % (i + 1),
+			"points": randi() % 1000  # Random points between 0 and 999
+		})
+	return fake_entries
 
 func get_leaderboard(quantity: int):
-	#returns a list of top 'quantity' users by score
-	pass
+	var file = FileAccess.open(leaderboard_path, FileAccess.READ)
+	if not file:
+		return calculate_leaderboard().slice(0, quantity)
+	
+	var content = file.get_as_text()
+	file.close()
+	
+	var leaderboard_data = JSON.parse_string(content)
+	if not leaderboard_data:
+		return calculate_leaderboard().slice(0, quantity)
+	
+	return leaderboard_data.slice(0, quantity)
 
 func get_planet_leaderboard(planet: String, quantity: int):
-	# Gets the top "quantity" people on the leaderboard from planet "planet"
-	#returns an array of the top quantity users sorted by rank
-
-	var example_data = []
-	example_data.append({"rank": 1, "name": "tim", "points": 420})
-	example_data.append({"rank": 2, "name": "larry", "points": 400})
-	example_data.append({"rank": 5, "name": "tom", "points": 300})
-
-	#sort the data by rank before sending it out
-	example_data.sort_custom(func(a, b): return a["rank"] < b["rank"])
-
+	# Load rocket positions to know who is on which planet
+	load_import_data(rockets, rockets_path)
 	
-	return example_data
-
-
+	var planet_users = []
+	for user_id in rockets:
+		if rockets[user_id].get("planet_id") == planet:
+			planet_users.append(user_id)
+	
+	# Get full leaderboard
+	var full_leaderboard = get_leaderboard(999)  # Get all entries
+	
+	# Filter for users on this planet
+	var planet_leaderboard = []
+	for entry in full_leaderboard:
+		if entry["id"] in planet_users:
+			planet_leaderboard.append(entry)
+	
+	# Return requested number of entries
+	return planet_leaderboard.slice(0, quantity)
 
 #TODO Be careful for doubled up ids
+
+func get_user_upgrades(user_id: String) -> Dictionary:
+	load_import_data(upgrades, upgrades_path)
+	return upgrades.get(user_id, {})
+
+func store_upgrades(user_id: String, upgrade_data: Dictionary) -> void:
+	load_import_data(upgrades, upgrades_path)
+	upgrades[user_id] = upgrade_data
+	
+	var file = FileAccess.open(upgrades_path, FileAccess.WRITE)
+	file.store_string(JSON.stringify(upgrades))
+	file.close()
+
+# Update the traverse cost calculation to use gas efficiency
+func get_traverse_cost(planet_data: Dictionary) -> Dictionary:
+	var user_id = get_user_id()
+	var user_upgrades = get_user_upgrades(user_id)
+	var efficiency = 1.0 - user_upgrades.get("gas_efficiency", 0.0)
+	
+	return {
+		"gas": ceil(planet_data.resource_cost.gas * efficiency),
+		"scrap": planet_data.resource_cost.scrap
+	}
+
+func store_rocket_position(employee_id: String, planet_id: String):
+	load_import_data(rockets, rockets_path)
+	rockets[employee_id] = {
+		"planet_id": planet_id
+	}
+	save_dictionary_to_file(rockets, rockets_path)
+	
+	# Also update rocket_positions
+	load_import_data(rocket_positions, rocket_positions_path)
+	if not rocket_positions.has(planet_id):
+		rocket_positions[planet_id] = {"employees": []}
+	if not employee_id in rocket_positions[planet_id]["employees"]:
+		rocket_positions[planet_id]["employees"].append(employee_id)
+	save_dictionary_to_file(rocket_positions, rocket_positions_path)
+
+func initialize_player_data(employee_id: String):
+	# Initialize materials
+	if not get_user_materials(employee_id):
+		store_materials(employee_id, 100, 50)  # Start with 100 gas and 50 scrap
+	
+	# Initialize rocket position if not set
+	if not get_rocket_data(employee_id):
+		store_rocket_position(employee_id, "Planet_1")
+	
+	# Initialize upgrades if not set
+	if not get_user_upgrades(employee_id):
+		store_upgrades(employee_id, {
+			"gas_efficiency": 0.0,
+			"point_multiplier": 1.0
+		})

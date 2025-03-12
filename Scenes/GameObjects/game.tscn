@@ -1,7 +1,7 @@
 [gd_scene load_steps=4 format=3 uid="uid://c2lvei4ypq3p4"]
 
-[ext_resource type="Script" path="res://Scenes/GameObjects/game.gd" id="1_xq1da"]
-[ext_resource type="Script" path="res://Scenes/GameObjects/camera.gd" id="2_cd7in"]
+[ext_resource type="Script" uid="uid://cnn5quwl0qn83" path="res://Scenes/GameObjects/game.gd" id="1_xq1da"]
+[ext_resource type="Script" uid="uid://o1ao8qll0h2q" path="res://Scenes/GameObjects/camera.gd" id="2_cd7in"]
 [ext_resource type="PackedScene" uid="uid://dm1h608ftloce" path="res://Scenes/GameObjects/blank_planet.tscn" id="2_mgfhn"]
 
 [node name="Game" type="Node2D"]
@@ -24,6 +24,7 @@ text = "Back"
 [node name="Planets" type="Node" parent="."]
 
 [node name="Planet_1" parent="Planets" instance=ExtResource("2_mgfhn")]
+visible = false
 position = Vector2(-162, 16)
 scale = Vector2(4.28612, 4.28612)
 disable_mode = 2

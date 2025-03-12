@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://c777lb3cw07a6"]
 
-[ext_resource type="Script" path="res://Scenes/Menus/create_user.gd" id="1_7f6uj"]
+[ext_resource type="Script" uid="uid://k4183yo6urav" path="res://Scenes/Menus/create_user.gd" id="1_7f6uj"]
 
 [node name="CreateUser" type="Control"]
 layout_mode = 3

@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://bh2x3wsfdgo5b"]
 
-[ext_resource type="Script" path="res://Scenes/Menus/adjust_employee.gd" id="1_n0mvi"]
+[ext_resource type="Script" uid="uid://cd6idontvd0fd" path="res://Scenes/Menus/adjust_employee.gd" id="1_n0mvi"]
 
 [node name="AdjustEmployee" type="Control"]
 layout_mode = 3

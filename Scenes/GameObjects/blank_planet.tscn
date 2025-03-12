@@ -1,7 +1,7 @@
 [gd_scene load_steps=4 format=3 uid="uid://dm1h608ftloce"]
 
 [ext_resource type="Texture2D" uid="uid://rnyd76q6gidw" path="res://Textures/planet.png" id="1_ospcq"]
-[ext_resource type="Script" path="res://Scenes/GameObjects/blank_planet.gd" id="1_x8akc"]
+[ext_resource type="Script" uid="uid://qv2yu0yewd1b" path="res://Scenes/GameObjects/blank_planet.gd" id="1_x8akc"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_61swb"]
 radius = 15.0
@@ -43,6 +43,23 @@ select_mode = 1
 [node name="CloseButton" type="Button" parent="Leaderboard/MarginContainer/VBoxContainer"]
 layout_mode = 2
 text = "Close"
+
+[node name="PlanetLabel" type="Label" parent="."]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -8.0
+offset_top = 18.0
+offset_right = 46.0
+offset_bottom = 41.0
+grow_horizontal = 2
+grow_vertical = 0
+scale = Vector2(0.3, 0.3)
+theme_override_font_sizes/font_size = 16
+text = "planet"
+horizontal_alignment = 1
 
 [connection signal="input_event" from="." to="." method="_on_input_event"]
 [connection signal="mouse_entered" from="." to="." method="_on_mouse_entered"]

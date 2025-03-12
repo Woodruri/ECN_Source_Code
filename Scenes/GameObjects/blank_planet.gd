@@ -8,12 +8,14 @@ var original_modulate = modulate
 @onready var leaderboard = $Leaderboard
 @onready var closeButton = $Leaderboard/MarginContainer/VBoxContainer/CloseButton
 @onready var leaderboardList = $Leaderboard/MarginContainer/VBoxContainer/LeaderboardList
+@onready var planet_label = $PlanetLabel
 
 # Planet data storage
 var planet_data = {}
 """
 Planet data structure:
 id: String, the id of the planet
+name: String, the display name of the planet
 position: Vector2, position of planet
 scale: Vector2, size of planet
 step: int, the step along the path on the main game
@@ -57,6 +59,14 @@ func _ready() -> void:
 
 	if not camera:
 		camera = get_node("/root/Game/Camera") 
+
+	# Set planet name label
+	if planet_label and planet_data:
+		var planet_name = planet_data.get("name", planet_data.get("id", "Unknown Planet"))
+		print("Setting planet name to: ", planet_name)  # Debug print
+		planet_label.text = planet_name
+	else:
+		print("Warning: PlanetLabel node not found or planet_data not set!")  # Debug print
 
 	#on planet enterring the scene, load its ships, especially the given player's for now
 	

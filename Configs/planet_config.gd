@@ -4,6 +4,7 @@ extends Node
 const PLANET_CONFIGS = [
     {
         "id": "Planet_1",
+        "name": "Alpha Station",
         "posX": -800,
         "posY": 0,
         "scale": 4.0,
@@ -15,8 +16,9 @@ const PLANET_CONFIGS = [
     },
     {
         "id": "Planet_2",
+        "name": "Beta Outpost",
         "posX": -400,
-        "posY": 50,
+        "posY": 200,
         "scale": 4.5,
         "texture": "planet_red",
         "resource_cost": {
@@ -26,8 +28,9 @@ const PLANET_CONFIGS = [
     },
     {
         "id": "Planet_3",
+        "name": "Gamma Haven",
         "posX": 0,
-        "posY": -50,
+        "posY": -150,
         "scale": 5.0,
         "texture": "planet_blue",
         "resource_cost": {

@@ -11,6 +11,8 @@ func _on_back_button_pressed() -> void:
 
 
 func _ready() -> void:
+	# Initialize player data if needed
+	DataHandler.initialize_player_data(DataHandler.get_user_id())
 	
 	# First set up all planets
 	generate_planets_from_config()
@@ -86,6 +88,7 @@ func generate_planets_from_config():
 	for planet in planet_configs:
 		var planet_data = {
 			"id": planet.get("id", "Unknown_Planet"),
+			"name": planet.get("name", planet.get("id", "Unknown_Planet")),
 			"position": Vector2(planet.get("posX", 0), planet.get("posY", 0)),
 			"scale": Vector2(planet.get("scale", 1.0), planet.get("scale", 1.0)),
 			"texture": planet.get("texture", "planet"),
@@ -149,6 +152,14 @@ func show_traverse_confirmation(target_planet: Node):
 	# Connect to handle response
 	dialog.confirmed.connect(func(): traverse_to_planet(target_planet))
 	
+	# Connect to cleanup when dialog closes
+	dialog.close_requested.connect(func(): 
+		var camera = get_node_or_null("Camera")
+		if camera:
+			camera.is_dragging = false
+		dialog.queue_free()
+	)
+	
 	add_child(dialog)
 	dialog.popup_centered()
 
@@ -158,12 +169,21 @@ func show_insufficient_resources_dialog(cost: Dictionary):
 		cost.gas,
 		cost.scrap
 	]
+	
+	# Connect to cleanup when dialog closes
+	dialog.close_requested.connect(func(): 
+		var camera = get_node_or_null("Camera")
+		if camera:
+			camera.is_dragging = false
+		dialog.queue_free()
+	)
+	
 	add_child(dialog)
 	dialog.popup_centered()
 
 func traverse_to_planet(target_planet: Node):
 	var user_id = DataHandler.get_user_id()
-	var materials = DataHandler.retrieve_materials(user_id)
+	var materials = DataHandler.get_user_materials(user_id)
 	
 	# Deduct resources
 	var new_gas = materials.get("gas", 0) - target_planet.planet_data.resource_cost.gas
@@ -172,5 +192,39 @@ func traverse_to_planet(target_planet: Node):
 	# Update materials in DataHandler
 	DataHandler.store_materials(user_id, new_gas, new_scrap)
 	
+	# Update rocket position in DataHandler
+	DataHandler.store_rocket_position(user_id, target_planet.name)
+	
+	# Remove rocket from current planet's orbit
+	var current_planet = get_node_or_null(DataHandler.get_rocket_position(user_id))
+	if current_planet:
+		var rocket = get_node_or_null(user_id)
+		if rocket:
+			rocket.set_parent_planet(null)  # Detach from current planet
+	
 	# Move rocket to new planet
 	add_rocket_to_planet(user_id, target_planet.name)
+	
+	# Refresh peer rockets on both planets
+	if current_planet:
+		load_peer_rockets_for_planet(current_planet.name)
+	load_peer_rockets_for_planet(target_planet.name)
+
+func load_peer_rockets_for_planet(planet_id: String):
+	# Clear existing peer rockets on this planet
+	var existing_rockets = get_tree().get_nodes_in_group("rockets")
+	for rocket in existing_rockets:
+		if rocket.name != DataHandler.get_user_id():  # Don't remove player's rocket
+			rocket.queue_free()
+	
+	# Get other rockets on the planet
+	var planet_rockets = DataHandler.get_rockets_on_planet(planet_id)
+	var user_id = DataHandler.get_user_id()
+	
+	# Remove current user from the list
+	planet_rockets.erase(user_id)
+	
+	# Randomly select up to MAX_ROCKET_PLANET peers
+	planet_rockets.shuffle()
+	for i in range(min(planet_rockets.size(), MAX_ROCKET_PLANET)):
+		spawn_rocket(planet_rockets[i], planet_id)
