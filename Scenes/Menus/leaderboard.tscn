@@ -11,87 +11,83 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_leaderboard")
 
-[node name="background" type="ColorRect" parent="."]
-visible = false
+[node name="Panel" type="Panel" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-size_flags_horizontal = 4
 
-[node name="TitleLabel" type="Label" parent="."]
+[node name="MarginContainer" type="MarginContainer" parent="."]
 layout_mode = 1
-anchors_preset = 5
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -106.0
-offset_right = 106.0
-offset_bottom = 38.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
-size_flags_horizontal = 4
+grow_vertical = 2
+theme_override_constants/margin_left = 40
+theme_override_constants/margin_top = 40
+theme_override_constants/margin_right = 40
+theme_override_constants/margin_bottom = 40
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="TitleLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
 theme_override_font_sizes/font_size = 32
 text = "Leaderboard"
 horizontal_alignment = 1
 
-[node name="LeaderboardContainer" type="HBoxContainer" parent="."]
-custom_minimum_size = Vector2(800, 400)
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -20.0
-offset_top = -20.0
-offset_right = 20.0
-offset_bottom = 20.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_constants/separation = 20
-
-[node name="GlobalContainer" type="VBoxContainer" parent="LeaderboardContainer"]
+[node name="LeaderboardContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
-size_flags_horizontal = 6
+size_flags_vertical = 3
+theme_override_constants/separation = 40
 
-[node name="GlobalLabel" type="Label" parent="LeaderboardContainer/GlobalContainer"]
+[node name="GlobalContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/LeaderboardContainer"]
 layout_mode = 2
-size_flags_horizontal = 4
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="GlobalLabel" type="Label" parent="MarginContainer/VBoxContainer/LeaderboardContainer/GlobalContainer"]
+layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "Global Rankings"
 horizontal_alignment = 1
 
-[node name="GlobalList" type="ItemList" parent="LeaderboardContainer/GlobalContainer"]
+[node name="GlobalList" type="ItemList" parent="MarginContainer/VBoxContainer/LeaderboardContainer/GlobalContainer"]
 layout_mode = 2
 size_flags_vertical = 3
+theme_override_font_sizes/font_size = 18
+auto_height = true
 
-[node name="PlanetContainer" type="VBoxContainer" parent="LeaderboardContainer"]
+[node name="PlanetContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/LeaderboardContainer"]
 layout_mode = 2
-size_flags_horizontal = 6
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
 
-[node name="PlanetLabel" type="Label" parent="LeaderboardContainer/PlanetContainer"]
+[node name="PlanetLabel" type="Label" parent="MarginContainer/VBoxContainer/LeaderboardContainer/PlanetContainer"]
 layout_mode = 2
-size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 24
 text = "Planet Rankings"
 horizontal_alignment = 1
 
-[node name="PlanetSelector" type="OptionButton" parent="LeaderboardContainer/PlanetContainer"]
+[node name="PlanetSelector" type="OptionButton" parent="MarginContainer/VBoxContainer/LeaderboardContainer/PlanetContainer"]
 layout_mode = 2
+theme_override_font_sizes/font_size = 16
+alignment = 1
 
-[node name="PlanetList" type="ItemList" parent="LeaderboardContainer/PlanetContainer"]
+[node name="PlanetList" type="ItemList" parent="MarginContainer/VBoxContainer/LeaderboardContainer/PlanetContainer"]
 layout_mode = 2
 size_flags_vertical = 3
+theme_override_font_sizes/font_size = 18
+auto_height = true
 
-[node name="BackButton" type="Button" parent="."]
-layout_mode = 1
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -185.0
-offset_bottom = 31.0
-grow_horizontal = 0
+[node name="BackButton" type="Button" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
 text = "Back"
 
-[connection signal="pressed" from="BackButton" to="." method="_on_back_button_pressed"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/BackButton" to="." method="_on_back_button_pressed"]

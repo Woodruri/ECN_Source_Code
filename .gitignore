@@ -2,3 +2,5 @@
 Addons
 *.translation
 *.uid
+login*
+firebase*

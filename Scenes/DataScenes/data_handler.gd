@@ -201,32 +201,45 @@ func save_dictionary_to_file(data_dictionary: Dictionary, file_path: String):
 #loads a file into a dictionary, be careful with this
 func load_import_data(data_dictionary: Dictionary, file_path: String):
 	#Loads existing data from file
+	print("Loading data from: ", file_path)  # Debug print
 	
 	#check if file exists
-	var file = FileAccess.open(file_path, FileAccess.READ)
-	
-	#check for file existence
-	if not file:
+	if not FileAccess.file_exists(file_path):
 		print("No file found at: ", file_path)
 		return
 	
-	
-	#check if data exists in file 
-	if not FileAccess.file_exists(file_path):
-		print("No data found in file: ", file_path)
+	var file = FileAccess.open(file_path, FileAccess.READ)
+	if not file:
+		print("Failed to open file: ", file_path)
 		return
-
+	
 	#Load data into provided dictionary
-	#NOTE get_var can run arbitrary code, only allow data to be run here from trusted sources
 	if not file.eof_reached():
 		var curr_line = file.get_line().strip_edges()
 		if curr_line:
 			var parsed_line = JSON.parse_string(curr_line)
-			for key in parsed_line.keys():
-				#Add to dict only if key doenst already exist
-				if not data_dictionary.has(key):
+			if parsed_line == null:
+				print("Failed to parse JSON from: ", file_path)
+				return
+				
+			if typeof(parsed_line) == TYPE_ARRAY:
+				# Handle array data
+				if data_dictionary.has("entries"):
+					data_dictionary["entries"] = parsed_line
+				else:
+					print("Dictionary missing 'entries' key for array data")
+			else:
+				# Update the entire dictionary with the parsed data
+				data_dictionary.clear()  # Clear existing data
+				for key in parsed_line:
 					data_dictionary[key] = parsed_line[key]
-	print("Data loaded successfully from: ", file_path)
+			
+			print("Data loaded successfully from: ", file_path)
+			print("Loaded data:", data_dictionary)  # Debug print
+		else:
+			print("Empty file: ", file_path)
+	else:
+		print("Empty file: ", file_path)
 
 func print_data():
 	print("reports:", reports)
@@ -239,6 +252,11 @@ func load_all_data():
 	load_import_data(employees, employees_path)
 	load_import_data(reports, reports_path)
 	load_import_data(relationships, relationships_path)
+	load_import_data(rockets, rockets_path)
+	
+	# Initialize planet positions if needed
+	initialize_planet_positions()
+	
 	print("Data successfully loaded.")
 
 ################################################ STORED OBJECTS ########################################################################
@@ -384,10 +402,9 @@ func get_rocket_data(employee_id: String) -> Dictionary:
 	var result = firebase_database.get_data(path)
 	return result.get("data", {})
 
-func get_rocket_position(employee_id: String):
-	#takes emp_id and returns a string of the ID of the planet that the rocket belongs on
+func get_rocket_position(employee_id: String) -> String:
 	load_import_data(rockets, rockets_path)
-	if employee_id in rockets:
+	if rockets.has(employee_id):
 		return rockets[employee_id].get("planet_id", "Planet_1")
 	return "Planet_1"  # Default to Planet_1 if no position found
 
@@ -456,26 +473,32 @@ func get_employee_from_id(employee_id: String):
 ############################################### LEADERBOARD STUFF #########################################################################
 
 func calculate_leaderboard() -> Array:
-	if not firebase_database:
-		return []
-		
-	var path = "users"
-	var users = firebase_database.get_data(path).get("data", {})
+	# Load necessary data
+	load_import_data(employees, employees_path)
+	load_import_data(reports, reports_path)
+	
 	var leaderboard_data = []
 	
-	for user_id in users:
-		var user_data = users[user_id]
-		var score = calculate_employee_score(user_id)
+	# Calculate scores for all employees
+	for employee_id in employees:
+		var employee_data = employees[employee_id]
+		var score = calculate_employee_score(employee_id)
 		leaderboard_data.append({
-			"id": user_id,
-			"name": user_data.get("display_name", "Unknown"),
-			"points": score
+			"id": employee_id,
+			"name": employee_data.get("assignee_name", "Unknown"),
+			"points": score,
+			"rank": 1  # Will be updated after sorting
 		})
 	
+	# Sort by points in descending order
 	leaderboard_data.sort_custom(func(a, b): return a["points"] > b["points"])
 	
+	# Update ranks
+	for i in range(leaderboard_data.size()):
+		leaderboard_data[i]["rank"] = i + 1
+	
 	# Store leaderboard
-	firebase_database.set_data("leaderboard", leaderboard_data)
+	save_dictionary_to_file({"entries": leaderboard_data}, leaderboard_path)
 	return leaderboard_data
 
 func generate_fake_leaderboard_entries(count: int) -> Array:
@@ -489,31 +512,37 @@ func generate_fake_leaderboard_entries(count: int) -> Array:
 	return fake_entries
 
 func get_leaderboard(quantity: int) -> Array:
-	if not firebase_database:
-		return []
-		
-	var path = "leaderboard"
-	var result = firebase_database.get_data(path)
-	var leaderboard_data = result.get("data", [])
+	# First try to load from file
+	var stored_data = {}
+	load_import_data(stored_data, leaderboard_path)
+	var leaderboard_data = []
 	
-	if leaderboard_data.is_empty():
+	# If no stored data or empty, calculate new leaderboard
+	if not stored_data.has("entries") or stored_data["entries"].is_empty():
 		leaderboard_data = calculate_leaderboard()
+	else:
+		leaderboard_data = stored_data["entries"]
 	
-	return leaderboard_data.slice(0, quantity)
+	# Return requested number of entries
+	if quantity > 0 and quantity < leaderboard_data.size():
+		return leaderboard_data.slice(0, quantity)
+	return leaderboard_data
 
 func get_planet_leaderboard(planet: String, quantity: int) -> Array:
-	if not firebase_database:
-		return []
-		
-	var rockets = get_rockets_on_planet(planet)
-	var full_leaderboard = get_leaderboard(999)
+	# Get global leaderboard first
+	var full_leaderboard = get_leaderboard(999)  # Get all entries
 	
+	# Filter for players on this planet
 	var planet_leaderboard = []
 	for entry in full_leaderboard:
-		if entry["id"] in rockets:
+		var player_planet = get_rocket_position(entry["id"])
+		if player_planet == planet:
 			planet_leaderboard.append(entry)
 	
-	return planet_leaderboard.slice(0, quantity)
+	# Return requested number of entries
+	if quantity > 0 and quantity < planet_leaderboard.size():
+		return planet_leaderboard.slice(0, quantity)
+	return planet_leaderboard
 
 #TODO Be careful for doubled up ids
 
@@ -637,3 +666,18 @@ func get_report_status(report_id: String) -> String:
 	if reports.has(report_id):
 		return reports[report_id].get("status", "In Progress")
 	return "Unknown"
+
+func initialize_planet_positions() -> void:
+	# Load necessary data
+	load_import_data(employees, employees_path)
+	load_import_data(rockets, rockets_path)
+	
+	# Initialize all employees to Planet_1
+	for employee_id in employees:
+		if not rockets.has(employee_id):
+			rockets[employee_id] = {
+				"planet_id": "Planet_1"
+			}
+	
+	# Save the updated rockets data
+	save_dictionary_to_file(rockets, rockets_path)
