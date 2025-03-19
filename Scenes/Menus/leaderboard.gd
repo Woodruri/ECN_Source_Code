@@ -4,6 +4,7 @@ extends Control
 @onready var planet_list = $MarginContainer/VBoxContainer/LeaderboardContainer/PlanetContainer/PlanetList
 @onready var planet_selector = $MarginContainer/VBoxContainer/LeaderboardContainer/PlanetContainer/PlanetSelector
 @onready var title_label = $MarginContainer/VBoxContainer/TitleLabel
+@onready var user_selector = $MarginContainer/VBoxContainer/UserSelector
 
 var current_planet = "Planet_1"
 
@@ -16,6 +17,9 @@ func _ready():
 	# Load all data first
 	DataHandler.load_all_data()
 	
+	# Populate user selector
+	populate_user_selector()
+	
 	# Populate planet selector
 	var planets = ["Planet_1", "Planet_2", "Planet_3"]
 	for planet in planets:
@@ -23,8 +27,45 @@ func _ready():
 	
 	# Connect signals
 	planet_selector.item_selected.connect(_on_planet_selected)
+	user_selector.item_selected.connect(_on_user_selected)
 	
 	# Initial display
+	update_leaderboards()
+
+func populate_user_selector():
+	user_selector.clear()
+	
+	# Get all employee IDs and names
+	var employees = DataHandler.employees
+	var current_user_id = DataHandler.get_user_id()
+	var current_user_index = 0
+	var index = 0
+	
+	# Sort employees by ID for consistent ordering
+	var sorted_ids = employees.keys()
+	sorted_ids.sort()
+	
+	# Add each employee to the dropdown
+	for employee_id in sorted_ids:
+		var employee = employees[employee_id]
+		var display_text = "%s (%s)" % [employee["assignee_name"], employee_id]
+		user_selector.add_item(display_text)
+		
+		# Store the ID in the metadata
+		user_selector.set_item_metadata(index, employee_id)
+		
+		# Keep track of current user's index
+		if employee_id == current_user_id:
+			current_user_index = index
+		
+		index += 1
+	
+	# Set the current user as selected
+	user_selector.select(current_user_index)
+
+func _on_user_selected(index: int):
+	var selected_id = user_selector.get_item_metadata(index)
+	DataHandler.set_user(selected_id)
 	update_leaderboards()
 
 func add_entry_to_list(list: ItemList, entry: Dictionary, is_current_user: bool = false):
