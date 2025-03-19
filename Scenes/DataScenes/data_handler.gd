@@ -29,9 +29,10 @@ employee_id:
 var reports: Dictionary = {}
 '''
 report_id: 
-			"id":: Str
+			"id": Str
 			"RV_executor": Str
 			"r2_count": int
+			"employees": list of employee_ids
 '''
 var relationships: Dictionary = {}
 '''
@@ -40,6 +41,7 @@ relationship_key:
 			"report_id": Str
 			"start_date": Str
 			"end_date": Str
+			"is_submitted": bool
 '''
 var points_allocated: Dictionary = {}
 '''
@@ -73,9 +75,16 @@ user_id:
 	"point_multiplier": float
 '''
 
+var firebase_database = null
+
+func _ready():
+	if Engine.has_singleton("FirebaseDatabase"):
+		firebase_database = Engine.get_singleton("FirebaseDatabase")
+
+func set_user(new_user_id: String) -> void:
+	user_id = new_user_id
 
 ####################################################### PARSING FUNCS #################################################################
-
 
 #verifies selected file
 func parse_data(file_path: String):
@@ -121,6 +130,7 @@ func parse_csv(file_path: String):
 				"RV_executor": import_data["RV_executor"],
 				"r2_count": int(import_data["r2_count"]),
 				"employees" : [import_data["assignee_id"]],
+				"status": "In Progress"
 				}
 		else:
 			pass #This should eventually update new information for a given report
@@ -136,8 +146,6 @@ func parse_csv(file_path: String):
 		else:
 			pass #This should update new information for a given employee as new info is updated
 		
-		#checking if the given report does NOT have the employee in it's employees list
-
 		# Add the employee to the report's employees list if not already present
 		if reports.has(import_data["report_id"]):
 			if "employees" in reports[import_data["report_id"]]:
@@ -168,7 +176,7 @@ func parse_csv(file_path: String):
 				"report_id" : import_data["report_id"],
 				"start_date" : import_data["start_date"],
 				"end_date" : import_data["end_date"],
-				"is_submitted" : false #represents if the employee has allocated points for the others who worked on this report
+				"is_submitted" : false  # Initialize as false for new relationships
 			}
 			
 		print("parsing complete")
@@ -276,7 +284,7 @@ func store_relationship(employee_id: String, report_id: String, start_date, clos
 	
 	save_dictionary_to_file(relationships, relationships_path)
 
-func store_materials(employee_id: String, gas: float, scrap: int):
+func store_materials(employee_id: String, gas: int, scrap: int):
 	#used to save an employee's materials
 	load_import_data(materials, materials_path)
 	materials[employee_id] = {
@@ -309,20 +317,72 @@ func reset_data():
 
 ################################################# RETRIEVAL #######################################################################
 
+func calculate_employee_score(employee_id: String) -> int:
+	var base_score = 0
+	
+	# Load reports data
+	load_import_data(reports, reports_path)
+	
+	# Get points from reports
+	for report_id in reports:
+		var report = reports[report_id]
+		if report.get("employees", []).has(employee_id):
+			base_score += int(report.get("r2_count", 0)) * 10
+	
+	return base_score
+
+func get_user_data() -> Dictionary:
+	# Get the current user's data from employees
+	var employee_data = get_employee_from_id(user_id)
+	if not employee_data:
+		return {}
+	
+	# Get user's materials from local storage
+	load_import_data(materials, materials_path)
+	var materials_data = materials.get(user_id, {"gas": 100, "scrap": 50})
+	
+	# Calculate user's points
+	var points = calculate_employee_score(user_id)
+	
+	# Get user's rank from local leaderboard or generate fake entry
+	var rank = 1  # Default to rank 1 for now
+	
+	# Get active ECNs
+	var active_ecns = get_active_ecns(user_id)
+	
+	return {
+		"name": employee_data.get("assignee_name", "Unknown"),
+		"points": points,
+		"resources": {
+			"gas": materials_data.get("gas", 0),
+			"scrap": materials_data.get("scrap", 0)
+		},
+		"rank": rank,
+		"active_ecns": active_ecns,
+		"upgrades": {
+			"gas_efficiency": 0.0,
+			"point_multiplier": 1.0
+		}
+	}
+
 func get_user_id() -> String:
 	return user_id
 
-func get_rocket_data(employee_id: String):
-	#retrieves rocket info for a given employee
-	#returns a dictionary with all of the rocket data 
-	
-	load_import_data(rockets, rockets_path)
-	
-	if employee_id in rockets:
-		return rockets[employee_id]
-	else:
-		print("No rocket data for %s" % employee_id)
+func get_user_materials(employee_id: String) -> Dictionary:
+	if not firebase_database:
 		return {}
+		
+	var path = "users/%s/materials" % employee_id
+	var result = firebase_database.get_data(path)
+	return result.get("data", {})
+
+func get_rocket_data(employee_id: String) -> Dictionary:
+	if not firebase_database:
+		return {}
+		
+	var path = "users/%s/rocket" % employee_id
+	var result = firebase_database.get_data(path)
+	return result.get("data", {})
 
 func get_rocket_position(employee_id: String):
 	#takes emp_id and returns a string of the ID of the planet that the rocket belongs on
@@ -332,29 +392,12 @@ func get_rocket_position(employee_id: String):
 	return "Planet_1"  # Default to Planet_1 if no position found
 
 func get_rockets_on_planet(planet_id: String) -> Array:
-	load_import_data(rocket_positions, rocket_positions_path)
-	
-	var planet_rockets = []
-	for rocket_id in rocket_positions:
-		if rocket_positions[rocket_id].get("planet_id") == planet_id:
-			planet_rockets.append(rocket_id)
-	
-	return planet_rockets
-
-func get_user_materials(employee_id: String):
-	#retrieves materials for a given employee
-	#returns a dictionary with the name of materials and quantities
-
-	
-	load_import_data(materials, materials_path)
-	
-	if employee_id in materials:
-		print("Material data for %s loaded" % employee_id)
-		print(materials[employee_id])
-		return materials[employee_id]
-	else:
-		print("No material data for %s" % employee_id)
-		return {} 
+	if not firebase_database:
+		return []
+		
+	var path = "planets/%s/rockets" % planet_id
+	var result = firebase_database.get_data(path)
+	return result.get("data", [])
 
 func get_active_ecns(employee_id: String):
 	#takes in a string that is the employee ID, and returns a list of ECN IDs for all ECNs that employee has active
@@ -412,64 +455,28 @@ func get_employee_from_id(employee_id: String):
 
 ############################################### LEADERBOARD STUFF #########################################################################
 
-func calculate_leaderboard():
-	# Load all necessary data
-	load_import_data(employees, employees_path)
-	load_import_data(points_allocated, points_allocated_path)
-	
+func calculate_leaderboard() -> Array:
+	if not firebase_database:
+		return []
+		
+	var path = "users"
+	var users = firebase_database.get_data(path).get("data", {})
 	var leaderboard_data = []
 	
-	# Calculate scores for each employee
-	for employee_id in employees.keys():
-		var score = calculate_employee_score(employee_id)
-		var name = employees[employee_id].get("assignee_name", "Unknown")
-		
+	for user_id in users:
+		var user_data = users[user_id]
+		var score = calculate_employee_score(user_id)
 		leaderboard_data.append({
-			"id": employee_id,
-			"name": name,
+			"id": user_id,
+			"name": user_data.get("display_name", "Unknown"),
 			"points": score
 		})
 	
-	# Sort by points
 	leaderboard_data.sort_custom(func(a, b): return a["points"] > b["points"])
 	
-	# Add ranks
-	for i in range(leaderboard_data.size()):
-		leaderboard_data[i]["rank"] = i + 1
-	
-	# Save to file
-	var file = FileAccess.open(leaderboard_path, FileAccess.WRITE)
-	file.store_string(JSON.stringify(leaderboard_data))
-	file.close()
-	
+	# Store leaderboard
+	firebase_database.set_data("leaderboard", leaderboard_data)
 	return leaderboard_data
-
-func calculate_employee_score(employee_id: String) -> int:
-	var base_score = 0
-	
-	# Add points from points_allocated
-	if points_allocated.has(employee_id):
-		base_score += points_allocated[employee_id].get("total_points", 0)
-	
-	# Add points from reports
-	load_import_data(relationships, relationships_path)
-	load_import_data(reports, reports_path)
-	
-	for relationship in relationships.values():
-		if relationship["employee_id"] == employee_id:
-			var report_id = relationship["report_id"]
-			if reports.has(report_id):
-				var r2_count = reports[report_id].get("r2_count", 0)
-				# Convert to int if it's a string
-				if r2_count is String:
-					r2_count = int(r2_count)
-				base_score += r2_count * 10  # 10 points per r2
-	
-	# Apply point multiplier
-	var upgrades = get_user_upgrades(employee_id)
-	var multiplier = upgrades.get("point_multiplier", 1.0)
-	
-	return ceil(base_score * multiplier)
 
 func generate_fake_leaderboard_entries(count: int) -> Array:
 	var fake_entries = []
@@ -481,54 +488,49 @@ func generate_fake_leaderboard_entries(count: int) -> Array:
 		})
 	return fake_entries
 
-func get_leaderboard(quantity: int):
-	var file = FileAccess.open(leaderboard_path, FileAccess.READ)
-	if not file:
-		return calculate_leaderboard().slice(0, quantity)
+func get_leaderboard(quantity: int) -> Array:
+	if not firebase_database:
+		return []
+		
+	var path = "leaderboard"
+	var result = firebase_database.get_data(path)
+	var leaderboard_data = result.get("data", [])
 	
-	var content = file.get_as_text()
-	file.close()
-	
-	var leaderboard_data = JSON.parse_string(content)
-	if not leaderboard_data:
-		return calculate_leaderboard().slice(0, quantity)
+	if leaderboard_data.is_empty():
+		leaderboard_data = calculate_leaderboard()
 	
 	return leaderboard_data.slice(0, quantity)
 
-func get_planet_leaderboard(planet: String, quantity: int):
-	# Load rocket positions to know who is on which planet
-	load_import_data(rockets, rockets_path)
+func get_planet_leaderboard(planet: String, quantity: int) -> Array:
+	if not firebase_database:
+		return []
+		
+	var rockets = get_rockets_on_planet(planet)
+	var full_leaderboard = get_leaderboard(999)
 	
-	var planet_users = []
-	for user_id in rockets:
-		if rockets[user_id].get("planet_id") == planet:
-			planet_users.append(user_id)
-	
-	# Get full leaderboard
-	var full_leaderboard = get_leaderboard(999)  # Get all entries
-	
-	# Filter for users on this planet
 	var planet_leaderboard = []
 	for entry in full_leaderboard:
-		if entry["id"] in planet_users:
+		if entry["id"] in rockets:
 			planet_leaderboard.append(entry)
 	
-	# Return requested number of entries
 	return planet_leaderboard.slice(0, quantity)
 
 #TODO Be careful for doubled up ids
 
 func get_user_upgrades(user_id: String) -> Dictionary:
-	load_import_data(upgrades, upgrades_path)
-	return upgrades.get(user_id, {})
+	if not firebase_database:
+		return {}
+		
+	var path = "users/%s/upgrades" % user_id
+	var result = firebase_database.get_data(path)
+	return result.get("data", {})
 
 func store_upgrades(user_id: String, upgrade_data: Dictionary) -> void:
-	load_import_data(upgrades, upgrades_path)
-	upgrades[user_id] = upgrade_data
-	
-	var file = FileAccess.open(upgrades_path, FileAccess.WRITE)
-	file.store_string(JSON.stringify(upgrades))
-	file.close()
+	if not firebase_database:
+		return
+		
+	var path = "users/%s/upgrades" % user_id
+	firebase_database.set_data(path, upgrade_data)
 
 # Update the traverse cost calculation to use gas efficiency
 func get_traverse_cost(planet_data: Dictionary) -> Dictionary:
@@ -541,33 +543,97 @@ func get_traverse_cost(planet_data: Dictionary) -> Dictionary:
 		"scrap": planet_data.resource_cost.scrap
 	}
 
-func store_rocket_position(employee_id: String, planet_id: String):
-	load_import_data(rockets, rockets_path)
-	rockets[employee_id] = {
-		"planet_id": planet_id
-	}
-	save_dictionary_to_file(rockets, rockets_path)
+func store_rocket_position(employee_id: String, planet_id: String) -> void:
+	if not firebase_database:
+		return
+		
+	var path = "users/%s/rocket" % employee_id
+	var data = {"planet_id": planet_id}
+	firebase_database.set_data(path, data)
 	
-	# Also update rocket_positions
-	load_import_data(rocket_positions, rocket_positions_path)
-	if not rocket_positions.has(planet_id):
-		rocket_positions[planet_id] = {"employees": []}
-	if not employee_id in rocket_positions[planet_id]["employees"]:
-		rocket_positions[planet_id]["employees"].append(employee_id)
-	save_dictionary_to_file(rocket_positions, rocket_positions_path)
+	# Update planet's rocket list
+	var planet_path = "planets/%s/rockets" % planet_id
+	var rockets = firebase_database.get_data(planet_path).get("data", [])
+	if not employee_id in rockets:
+		rockets.append(employee_id)
+		firebase_database.set_data(planet_path, rockets)
 
-func initialize_player_data(employee_id: String):
-	# Initialize materials
-	if not get_user_materials(employee_id):
-		store_materials(employee_id, 100, 50)  # Start with 100 gas and 50 scrap
+func initialize_player_data(employee_id: String) -> void:
+	# Initialize materials if not set
+	if get_user_materials(employee_id).is_empty():
+		store_materials(employee_id, 100, 50)
 	
 	# Initialize rocket position if not set
-	if not get_rocket_data(employee_id):
+	if get_rocket_data(employee_id).is_empty():
 		store_rocket_position(employee_id, "Planet_1")
 	
 	# Initialize upgrades if not set
-	if not get_user_upgrades(employee_id):
+	if get_user_upgrades(employee_id).is_empty():
 		store_upgrades(employee_id, {
 			"gas_efficiency": 0.0,
 			"point_multiplier": 1.0
 		})
+
+func get_user_ecns() -> Array:
+	'''
+	Returns a list of dictionaries, each containing the title, status, and r2_count of an ECN,
+	distinct from get_active_ecns() because this returns all ECNs that the user has worked on,
+	regardless of whether they are currently active or not
+	'''
+	var user_id = get_user_id()
+	var active_ecns = get_active_ecns(user_id)
+	var ecn_list = []
+	
+	load_import_data(reports, reports_path)
+	load_import_data(relationships, relationships_path)
+	
+	for ecn_id in active_ecns:
+		if ecn_id in reports:
+			var report = reports[ecn_id]
+			var relationship_key = get_relationship_key(user_id, ecn_id)
+			var is_submitted = relationships.get(relationship_key, {}).get("is_submitted", false)
+			var status = "In Progress"
+			if is_submitted:
+				status = "Submitted"
+			elif report.get("status") == "Completed":
+				status = "Completed"
+			
+			var ecn_data = {
+				"title": report["id"],
+				"status": status,
+				"r2_count": report["r2_count"]
+			}
+			ecn_list.append(ecn_data)
+	
+	return ecn_list
+
+func mark_report_as_submitted(employee_id: String, report_id: String) -> void:
+	# Load relationships data
+	load_import_data(relationships, relationships_path)
+	
+	# Get the relationship key and update is_submitted
+	var relationship_key = get_relationship_key(employee_id, report_id)	
+	if relationships.has(relationship_key):
+		relationships[relationship_key]["is_submitted"] = true
+		save_dictionary_to_file(relationships, relationships_path)
+		
+		# Update report status if all employees have submitted
+		var all_submitted = true
+		var employees_list = get_employees_from_ecn(report_id)
+		for emp_id in employees_list:
+			var emp_relationship_key = get_relationship_key(emp_id, report_id)
+			if relationships.has(emp_relationship_key) and not relationships[emp_relationship_key]["is_submitted"]:
+				all_submitted = false
+				break
+		
+		if all_submitted:
+			load_import_data(reports, reports_path)
+			if reports.has(report_id):
+				reports[report_id]["status"] = "Completed"
+				save_dictionary_to_file(reports, reports_path)
+
+func get_report_status(report_id: String) -> String:
+	load_import_data(reports, reports_path)
+	if reports.has(report_id):
+		return reports[report_id].get("status", "In Progress")
+	return "Unknown"

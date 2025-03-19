@@ -5,7 +5,7 @@ var shop_items = {
 		"name": "Extra Gas Tank",
 		"description": "Increases gas capacity by 50",
 		"cost": {"scrap": 100},
-		"effect": func(user_id): 
+		"effect": func(user_id):
 			var materials = DataHandler.get_user_materials(user_id)
 			materials["gas"] = materials.get("gas", 0) + 50
 			DataHandler.store_materials(user_id, materials["gas"], materials.get("scrap", 0))

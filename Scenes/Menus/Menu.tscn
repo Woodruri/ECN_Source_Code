@@ -33,7 +33,7 @@ offset_right = 426.5
 offset_bottom = 188.5
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 15
 
 [node name="StartButton" type="Button" parent="VBoxContainer"]
 layout_mode = 2
@@ -43,13 +43,13 @@ theme_override_font_sizes/font_size = 35
 theme_override_styles/normal = SubResource("StyleBoxFlat_vgwe0")
 text = "Start Game"
 
-[node name="AllocatePointsButton" type="Button" parent="VBoxContainer"]
+[node name="DashboardButton" type="Button" parent="VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_font_sizes/font_size = 35
 theme_override_styles/normal = SubResource("StyleBoxFlat_vgwe0")
-text = "Allocate Points"
+text = "Dashboard"
 
 [node name="LeaderboardButton" type="Button" parent="VBoxContainer"]
 layout_mode = 2
@@ -92,7 +92,7 @@ theme_override_styles/normal = SubResource("StyleBoxFlat_vgwe0")
 text = "Exit"
 
 [connection signal="pressed" from="VBoxContainer/StartButton" to="." method="_on_start_button_pressed"]
-[connection signal="pressed" from="VBoxContainer/AllocatePointsButton" to="." method="_on_allocate_points_button_pressed"]
+[connection signal="pressed" from="VBoxContainer/DashboardButton" to="." method="_on_dashboard_button_pressed"]
 [connection signal="pressed" from="VBoxContainer/LeaderboardButton" to="." method="_on_leaderboard_button_pressed"]
 [connection signal="pressed" from="VBoxContainer/ShopButton" to="." method="_on_shop_button_pressed"]
 [connection signal="pressed" from="VBoxContainer/CustomizeShipButton" to="." method="_on_customize_ship_button_pressed"]

@@ -65,6 +65,7 @@ func _ready() -> void:
 		var planet_name = planet_data.get("name", planet_data.get("id", "Unknown Planet"))
 		print("Setting planet name to: ", planet_name)  # Debug print
 		planet_label.text = planet_name
+		center_planet_label()
 	else:
 		print("Warning: PlanetLabel node not found or planet_data not set!")  # Debug print
 
@@ -197,3 +198,9 @@ func get_orbit_data_for_rocket(rocket_id: String) -> Dictionary:
 func remove_rocket_from_orbit(rocket_id: String):
 	if rocket_orbits.has(rocket_id):
 		rocket_orbits.erase(rocket_id)
+
+func center_planet_label() -> void:
+	if planet_label:
+		# Simple centered positioning
+		planet_label.position = Vector2(0, 30)  # Just move it down from the planet center
+		planet_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER  # Center the text

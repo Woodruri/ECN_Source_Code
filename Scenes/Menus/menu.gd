@@ -10,8 +10,8 @@ func _on_start_button_pressed() -> void:
 	get_tree().change_scene_to_file("res://Scenes/GameObjects/game.tscn")
 
 
-func _on_allocate_points_button_pressed() -> void:
-	get_tree().change_scene_to_file("res://Scenes/Menus/allocate_points.tscn")
+func _on_dashboard_button_pressed() -> void:
+	get_tree().change_scene_to_file("res://Scenes/Menus/dashboard.tscn")
 
 
 func _on_leaderboard_button_pressed() -> void:

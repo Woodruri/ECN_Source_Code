@@ -1,0 +1,101 @@
+[gd_scene load_steps=2 format=3 uid="uid://b50a6irpm5s3h"]
+
+[ext_resource type="Script" uid="uid://wfn80xdtcogt" path="res://Scenes/Menus/dashboard.gd" id="1_n1sg5"]
+
+[node name="Dashboard" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_n1sg5")
+
+[node name="Panel" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+metadata/_edit_use_anchors_ = true
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 15
+
+[node name="DashboardLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "User Dashboard"
+horizontal_alignment = 1
+
+[node name="UserInfoSection" type="VBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="NameLabel" type="Label" parent="MarginContainer/VBoxContainer/UserInfoSection"]
+layout_mode = 2
+text = "Name: "
+
+[node name="ResourcesLabel" type="Label" parent="MarginContainer/VBoxContainer/UserInfoSection"]
+layout_mode = 2
+text = "Resources: "
+
+[node name="PointsLabel" type="Label" parent="MarginContainer/VBoxContainer/UserInfoSection"]
+layout_mode = 2
+text = "Points: "
+
+[node name="RankingLabel" type="Label" parent="MarginContainer/VBoxContainer/UserInfoSection"]
+layout_mode = 2
+text = "Rank: "
+
+[node name="HSeparator" type="HSeparator" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="ReportsSection" type="VBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="ActiveReports" type="VBoxContainer" parent="MarginContainer/VBoxContainer/ReportsSection"]
+layout_mode = 2
+
+[node name="ActiveReportsLabel" type="Label" parent="MarginContainer/VBoxContainer/ReportsSection/ActiveReports"]
+layout_mode = 2
+text = "Active Reports"
+
+[node name="ReportsList" type="ItemList" parent="MarginContainer/VBoxContainer/ReportsSection/ActiveReports"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="HSeparator" type="HSeparator" parent="MarginContainer/VBoxContainer/ReportsSection"]
+layout_mode = 2
+
+[node name="InactiveReports" type="VBoxContainer" parent="MarginContainer/VBoxContainer/ReportsSection"]
+layout_mode = 2
+
+[node name="InactiveReportsLabel" type="Label" parent="MarginContainer/VBoxContainer/ReportsSection/InactiveReports"]
+layout_mode = 2
+text = "Completed Reports"
+
+[node name="ReportsList" type="ItemList" parent="MarginContainer/VBoxContainer/ReportsSection/InactiveReports"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="BackButton" type="Button" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Back"
+
+[connection signal="pressed" from="MarginContainer/VBoxContainer/BackButton" to="." method="_on_back_button_pressed"]
