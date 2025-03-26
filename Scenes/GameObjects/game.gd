@@ -3,16 +3,68 @@ extends Node2D
 var PlanetScene = preload("res://Scenes/GameObjects/blank_planet.tscn")
 var RocketScene = preload("res://Scenes/GameObjects/Rocket.tscn")
 
-
 var MAX_ROCKET_PLANET = 5 #Max rockets to be loaded per planet
+
+# Resource display references
+@onready var gas_label = $UI/ResourceDisplay/HBoxContainer/GasContainer/GasLabel
+@onready var scrap_label = $UI/ResourceDisplay/HBoxContainer/ScrapContainer/ScrapLabel
 
 func _on_back_button_pressed() -> void:
 	get_tree().change_scene_to_file("res://Scenes/Menus/Menu.tscn")
 
+func _on_debug_button_pressed() -> void:
+	# Get current resources
+	var user_id = DataHandler.get_user_id()
+	var materials = DataHandler.get_user_materials(user_id)
+	
+	print("DEBUG: Before update - Current resources:", materials)
+	
+	# Add 1000 to each resource
+	var new_gas = materials.get("gas", 0) + 1000
+	var new_scrap = materials.get("scrap", 0) + 1000
+	
+	print("DEBUG: Planning to update to - Gas:", new_gas, ", Scrap:", new_scrap)
+	
+	# Store updated resources
+	DataHandler.store_materials(user_id, new_gas, new_scrap)
+	
+	# Wait a moment and check if values were stored correctly
+	await get_tree().create_timer(0.5).timeout
+	
+	# Check retrieved data after update
+	var updated_materials = DataHandler.get_user_materials(user_id)
+	print("DEBUG: After update - Retrieved resources:", updated_materials)
+	
+	# Force direct update of UI
+	if gas_label and scrap_label:
+		gas_label.text = str(new_gas)
+		scrap_label.text = str(new_scrap)
+		print("DEBUG: Directly updated UI labels - Gas:", gas_label.text, ", Scrap:", scrap_label.text)
+	
+	# Call update_resource_display again to ensure UI is refreshed
+	update_resource_display()
+	
+	print("DEBUG: Added 1000 gas and 1000 scrap")
+
+func update_resource_display() -> void:
+	var user_id = DataHandler.get_user_id()
+	var materials = DataHandler.get_user_materials(user_id)
+	
+	print("Loading resources for user: ", user_id)
+	print("Materials data: ", materials)
+	
+	# Ensure the labels exist and update them
+	if gas_label and scrap_label:
+		gas_label.text = str(materials.get("gas", 0))
+		scrap_label.text = str(materials.get("scrap", 0))
+		print("Set resource labels - Gas: ", gas_label.text, ", Scrap: ", scrap_label.text)
 
 func _ready() -> void:
 	# Initialize player data if needed
 	DataHandler.initialize_player_data(DataHandler.get_user_id())
+	
+	# Update resource display
+	update_resource_display()
 	
 	# First set up all planets
 	generate_planets_from_config()
@@ -84,6 +136,10 @@ func add_rocket_to_planet(rocket_id: String, planet_name: String):
 
 func generate_planets_from_config():
 	var planet_configs = load("res://Configs/planet_config.gd").PLANET_CONFIGS
+	var min_x = INF
+	var max_x = -INF
+	var min_y = INF
+	var max_y = -INF
 
 	for planet in planet_configs:
 		var planet_data = {
@@ -96,7 +152,42 @@ func generate_planets_from_config():
 		}
 	
 		add_planet_to_map(planet_data)
+		
+		# Update bounds
+		min_x = min(min_x, planet_data.position.x)
+		max_x = max(max_x, planet_data.position.x)
+		min_y = min(min_y, planet_data.position.y)
+		max_y = max(max_y, planet_data.position.y)
 	
+	# Center camera on planets
+	center_camera_on_planets(min_x, max_x, min_y, max_y)
+
+func center_camera_on_planets(min_x: float, max_x: float, min_y: float, max_y: float):
+	var camera = get_node_or_null("Camera")
+	if not camera:
+		return
+		
+	# Calculate center point
+	var center_x = (min_x + max_x) / 2
+	var center_y = (min_y + max_y) / 2
+	
+	# Add some padding to the bounds
+	var padding = 200  # Adjust this value to change how much padding there is around the planets
+	min_x -= padding
+	max_x += padding
+	min_y -= padding
+	max_y += padding
+	
+	# Calculate the zoom level needed to fit all planets
+	var viewport_size = get_viewport_rect().size
+	var world_size = Vector2(max_x - min_x, max_y - min_y)
+	var zoom_x = viewport_size.x / world_size.x
+	var zoom_y = viewport_size.y / world_size.y
+	var zoom = min(zoom_x, zoom_y) * 0.8  # 0.8 to add some margin
+	
+	# Set camera position and zoom
+	camera.position = Vector2(center_x, center_y)
+	camera.zoom = Vector2(zoom, zoom)
 
 func add_planet_to_map(planet_data: Dictionary):
 	#takes a planet dicitonary object and then adds it to the game world
@@ -139,29 +230,37 @@ func has_enough_resources(materials: Dictionary, cost: Dictionary) -> bool:
 	return materials.get("gas", 0) >= cost.gas and materials.get("scrap", 0) >= cost.scrap
 
 func show_traverse_confirmation(target_planet: Node):
-	var dialog = AcceptDialog.new()
+	# Use ConfirmationDialog instead of AcceptDialog for better button control
+	var dialog = ConfirmationDialog.new()
 	dialog.dialog_text = "Would you like to travel to %s?\nCost: %d Gas, %d Scrap" % [
 		target_planet.name,
 		target_planet.planet_data.resource_cost.gas,
 		target_planet.planet_data.resource_cost.scrap
 	]
 	
-	dialog.add_button("Cancel", true, "cancel")
-	dialog.add_button("Travel", false, "travel")
+	# Customize the default buttons
+	dialog.ok_button_text = "Travel"
+	dialog.cancel_button_text = "Cancel"
 	
-	# Connect to handle response
+	# Connect to handle responses
 	dialog.confirmed.connect(func(): traverse_to_planet(target_planet))
 	
 	# Connect to cleanup when dialog closes
-	dialog.close_requested.connect(func(): 
+	dialog.canceled.connect(func():
 		var camera = get_node_or_null("Camera")
 		if camera:
 			camera.is_dragging = false
+	)
+	
+	dialog.close_requested.connect(func():
 		dialog.queue_free()
 	)
 	
 	add_child(dialog)
 	dialog.popup_centered()
+	
+	# Set size to make sure text fits nicely
+	dialog.min_size = Vector2(300, 150)
 
 func show_insufficient_resources_dialog(cost: Dictionary):
 	var dialog = AcceptDialog.new()
@@ -170,6 +269,9 @@ func show_insufficient_resources_dialog(cost: Dictionary):
 		cost.scrap
 	]
 	
+	# Set the button text to just "OK"
+	dialog.ok_button_text = "OK"
+	
 	# Connect to cleanup when dialog closes
 	dialog.close_requested.connect(func(): 
 		var camera = get_node_or_null("Camera")
@@ -180,6 +282,7 @@ func show_insufficient_resources_dialog(cost: Dictionary):
 	
 	add_child(dialog)
 	dialog.popup_centered()
+	dialog.min_size = Vector2(300, 100)
 
 func traverse_to_planet(target_planet: Node):
 	var user_id = DataHandler.get_user_id()
@@ -191,6 +294,9 @@ func traverse_to_planet(target_planet: Node):
 	
 	# Update materials in DataHandler
 	DataHandler.store_materials(user_id, new_gas, new_scrap)
+	
+	# Update the UI to reflect new resource values
+	update_resource_display()
 	
 	# Update rocket position in DataHandler
 	DataHandler.store_rocket_position(user_id, target_planet.name)

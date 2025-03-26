@@ -23,8 +23,7 @@ func _on_shop_button_pressed() -> void:
 
 
 func _on_customize_ship_button_pressed() -> void:
-	#TODO get_tree().change_scene_to_file("res://Scenes/game.tscn")
-	pass
+	get_tree().change_scene_to_file("res://Scenes/Menus/customize_ship.tscn")
 
 
 func _on_options_button_pressed() -> void:

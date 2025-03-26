@@ -1,6 +1,10 @@
 extends CharacterBody2D
 
 @onready var name_label = $NameLabel
+@onready var rocket_body = $"Rocket Body"
+
+# Cosmetic properties
+var applied_cosmetics = {}
 
 # Orbit parameters
 var parent_planet: Area2D = null
@@ -15,6 +19,39 @@ func _ready() -> void:
 		name_label.text = name  # Name will be rocket_id
 	print("Rocket initialized: ", name)
 	add_to_group("rockets")  # Add to rockets group for easy management
+	
+	# Load and apply any saved cosmetics
+	load_cosmetics()
+
+func load_cosmetics():
+	# Only load cosmetics for the player's rocket
+	if name == DataHandler.get_user_id():
+		var user_cosmetics = DataHandler.get_user_cosmetics(name)
+		for cosmetic_id in user_cosmetics:
+			if user_cosmetics[cosmetic_id]:
+				apply_cosmetic(cosmetic_id)
+
+func apply_cosmetic(cosmetic_id: String):
+	# Track which cosmetics are applied
+	applied_cosmetics[cosmetic_id] = true
+	
+	# Apply the visual changes based on cosmetic ID
+	match cosmetic_id:
+		"red_rocket":
+			rocket_body.modulate = Color(1.0, 0.2, 0.2)  # Red
+		"blue_rocket":
+			rocket_body.modulate = Color(0.2, 0.4, 1.0)  # Blue
+		"gold_trim":
+			# Add gold trim effect - in a real implementation, this might change
+			# to a different texture or add a child sprite
+			rocket_body.modulate = rocket_body.modulate.lightened(0.3)
+			
+	print("Applied cosmetic: ", cosmetic_id)
+
+func clear_cosmetics():
+	# Reset rocket appearance
+	rocket_body.modulate = Color(1, 1, 1)  # Default white
+	applied_cosmetics.clear()
 
 func _physics_process(delta: float) -> void:
 	if is_orbiting and parent_planet:

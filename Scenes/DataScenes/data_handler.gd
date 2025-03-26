@@ -15,6 +15,9 @@ extends Node
 @export var rockets_path: String = "res://data/persistent_storage/rockets.json"
 @export var rocket_positions_path: String = "res://data/persistent_storage/rocket_positions.json"
 
+# Add these new export variables among the other export variables
+@export var cosmetics_path: String = "res://data/persistent_storage/cosmetics.json"
+@export var drones_path: String = "res://data/persistent_storage/drones.json"
 
 ###################################################### DICTIONARIES ##################################################################
 
@@ -75,11 +78,29 @@ user_id:
 	"point_multiplier": float
 '''
 
-var firebase_database = null
+# Add these new dictionaries to the dictionaries section
+var cosmetics: Dictionary = {}
+"""
+user_id:
+    cosmetic_id: bool
+"""
+
+var drones: Dictionary = {}
+"""
+user_id:
+    drone_id: int (count of drones)
+"""
 
 func _ready():
-	if Engine.has_singleton("FirebaseDatabase"):
-		firebase_database = Engine.get_singleton("FirebaseDatabase")
+	# Ensure data directories exist
+	var dir = DirAccess.open("res://")
+	if not dir.dir_exists("data"):
+		dir.make_dir("data")
+	if not dir.dir_exists("data/persistent_storage"):
+		dir.make_dir("data/persistent_storage")
+	
+	# Initialize dictionaries if needed
+	load_all_data()
 
 func set_user(new_user_id: String) -> void:
 	user_id = new_user_id
@@ -253,6 +274,8 @@ func load_all_data():
 	load_import_data(reports, reports_path)
 	load_import_data(relationships, relationships_path)
 	load_import_data(rockets, rockets_path)
+	load_import_data(cosmetics, cosmetics_path)
+	load_import_data(drones, drones_path)
 	
 	# Initialize planet positions if needed
 	initialize_planet_positions()
@@ -303,13 +326,17 @@ func store_relationship(employee_id: String, report_id: String, start_date, clos
 	save_dictionary_to_file(relationships, relationships_path)
 
 func store_materials(employee_id: String, gas: int, scrap: int):
-	#used to save an employee's materials
+	# Used to save an employee's materials - local storage only
+	print("DEBUG: Storing materials - Gas:", gas, ", Scrap:", scrap)
+	
+	# Update the local dictionary and save to file
 	load_import_data(materials, materials_path)
 	materials[employee_id] = {
-		"gas" : gas,
-		"scrap" : scrap
+		"gas": gas,
+		"scrap": scrap
 	}
 	save_dictionary_to_file(materials, materials_path)
+	print("DEBUG: Saved materials to local storage")
 
 func store_allocated_points(employee_id: String, report_id: String, points_dict: Dictionary):
 	#used to save a point allocation event from the point allocation page
@@ -387,20 +414,15 @@ func get_user_id() -> String:
 	return user_id
 
 func get_user_materials(employee_id: String) -> Dictionary:
-	if not firebase_database:
-		return {}
-		
-	var path = "users/%s/materials" % employee_id
-	var result = firebase_database.get_data(path)
-	return result.get("data", {})
+	# Only use local storage
+	load_import_data(materials, materials_path)
+	print("DEBUG: Loaded materials from local storage: ", materials)
+	return materials.get(employee_id, {"gas": 100, "scrap": 50})
 
 func get_rocket_data(employee_id: String) -> Dictionary:
-	if not firebase_database:
-		return {}
-		
-	var path = "users/%s/rocket" % employee_id
-	var result = firebase_database.get_data(path)
-	return result.get("data", {})
+	# Local storage only for rocket data
+	load_import_data(rockets, rockets_path)
+	return rockets.get(employee_id, {"planet_id": "Planet_1"})
 
 func get_rocket_position(employee_id: String) -> String:
 	load_import_data(rockets, rockets_path)
@@ -409,12 +431,15 @@ func get_rocket_position(employee_id: String) -> String:
 	return "Planet_1"  # Default to Planet_1 if no position found
 
 func get_rockets_on_planet(planet_id: String) -> Array:
-	if not firebase_database:
-		return []
-		
-	var path = "planets/%s/rockets" % planet_id
-	var result = firebase_database.get_data(path)
-	return result.get("data", [])
+	# Use local storage to find all rockets on a planet
+	load_import_data(rockets, rockets_path)
+	var planet_rockets = []
+	
+	for rocket_id in rockets:
+		if rockets[rocket_id].get("planet_id", "") == planet_id:
+			planet_rockets.append(rocket_id)
+	
+	return planet_rockets
 
 func get_active_ecns(employee_id: String):
 	#takes in a string that is the employee ID, and returns a list of ECN IDs for all ECNs that employee has active
@@ -547,19 +572,14 @@ func get_planet_leaderboard(planet: String, quantity: int) -> Array:
 #TODO Be careful for doubled up ids
 
 func get_user_upgrades(user_id: String) -> Dictionary:
-	if not firebase_database:
-		return {}
-		
-	var path = "users/%s/upgrades" % user_id
-	var result = firebase_database.get_data(path)
-	return result.get("data", {})
+	load_import_data(upgrades, upgrades_path)
+	return upgrades.get(user_id, {"gas_efficiency": 0.0, "point_multiplier": 1.0})
 
 func store_upgrades(user_id: String, upgrade_data: Dictionary) -> void:
-	if not firebase_database:
-		return
-		
-	var path = "users/%s/upgrades" % user_id
-	firebase_database.set_data(path, upgrade_data)
+	load_import_data(upgrades, upgrades_path)
+	upgrades[user_id] = upgrade_data
+	save_dictionary_to_file(upgrades, upgrades_path)
+	print("DEBUG: Saved upgrades to local storage")
 
 # Update the traverse cost calculation to use gas efficiency
 func get_traverse_cost(planet_data: Dictionary) -> Dictionary:
@@ -573,35 +593,33 @@ func get_traverse_cost(planet_data: Dictionary) -> Dictionary:
 	}
 
 func store_rocket_position(employee_id: String, planet_id: String) -> void:
-	if not firebase_database:
-		return
-		
-	var path = "users/%s/rocket" % employee_id
-	var data = {"planet_id": planet_id}
-	firebase_database.set_data(path, data)
-	
-	# Update planet's rocket list
-	var planet_path = "planets/%s/rockets" % planet_id
-	var rockets = firebase_database.get_data(planet_path).get("data", [])
-	if not employee_id in rockets:
-		rockets.append(employee_id)
-		firebase_database.set_data(planet_path, rockets)
+	# Store rocket position in local storage only
+	load_import_data(rockets, rockets_path)
+	rockets[employee_id] = {"planet_id": planet_id}
+	save_dictionary_to_file(rockets, rockets_path)
+	print("DEBUG: Saved rocket position to local storage")
 
 func initialize_player_data(employee_id: String) -> void:
 	# Initialize materials if not set
-	if get_user_materials(employee_id).is_empty():
+	var current_materials = get_user_materials(employee_id)
+	if current_materials.is_empty() or not (current_materials.has("gas") and current_materials.has("scrap")):
 		store_materials(employee_id, 100, 50)
+		print("DEBUG: Initialized default materials for player")
 	
 	# Initialize rocket position if not set
-	if get_rocket_data(employee_id).is_empty():
+	var rocket_data = get_rocket_data(employee_id)
+	if rocket_data.is_empty() or not rocket_data.has("planet_id"):
 		store_rocket_position(employee_id, "Planet_1")
+		print("DEBUG: Initialized default rocket position for player")
 	
 	# Initialize upgrades if not set
-	if get_user_upgrades(employee_id).is_empty():
+	var user_upgrades = get_user_upgrades(employee_id)
+	if user_upgrades.is_empty():
 		store_upgrades(employee_id, {
 			"gas_efficiency": 0.0,
 			"point_multiplier": 1.0
 		})
+		print("DEBUG: Initialized default upgrades for player")
 
 func get_user_ecns() -> Array:
 	'''
@@ -681,3 +699,25 @@ func initialize_planet_positions() -> void:
 	
 	# Save the updated rockets data
 	save_dictionary_to_file(rockets, rockets_path)
+
+# Add these functions for getting and storing cosmetics
+func get_user_cosmetics(user_id: String) -> Dictionary:
+	load_import_data(cosmetics, cosmetics_path)
+	return cosmetics.get(user_id, {})
+
+func store_user_cosmetics(user_id: String, user_cosmetics: Dictionary) -> void:
+	load_import_data(cosmetics, cosmetics_path)
+	cosmetics[user_id] = user_cosmetics
+	save_dictionary_to_file(cosmetics, cosmetics_path)
+	print("DEBUG: Saved cosmetics to local storage")
+
+# Add these functions for getting and storing drones
+func get_user_drones(user_id: String) -> Dictionary:
+	load_import_data(drones, drones_path)
+	return drones.get(user_id, {})
+
+func store_user_drones(user_id: String, user_drones: Dictionary) -> void:
+	load_import_data(drones, drones_path)
+	drones[user_id] = user_drones
+	save_dictionary_to_file(drones, drones_path)
+	print("DEBUG: Saved drones to local storage")

@@ -1,0 +1,123 @@
+[gd_scene load_steps=2 format=3 uid="uid://by4s4pmhmap3c"]
+
+[ext_resource type="Script" uid="uid://rssgfxuuhgfn" path="res://Scenes/Menus/customize_ship.gd" id="1_iwgt8"]
+
+[node name="CustomizeShip" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_iwgt8")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.121569, 0.121569, 0.121569, 1)
+
+[node name="Title" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -20.0
+offset_right = 20.0
+offset_bottom = 23.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 32
+text = "Customize Ship"
+horizontal_alignment = 1
+
+[node name="ShipPreviewContainer" type="SubViewportContainer" parent="."]
+layout_mode = 1
+anchors_preset = 9
+anchor_bottom = 1.0
+offset_top = 69.0
+offset_right = 400.0
+grow_vertical = 2
+stretch = true
+
+[node name="SubViewport" type="SubViewport" parent="ShipPreviewContainer"]
+transparent_bg = true
+handle_input_locally = false
+size = Vector2i(400, 579)
+
+[node name="CosmeticsPanel" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -400.0
+offset_top = -300.0
+offset_bottom = 300.0
+grow_horizontal = 0
+grow_vertical = 2
+
+[node name="CosmeticsTitle" type="Label" parent="CosmeticsPanel"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -20.0
+offset_right = 20.0
+offset_bottom = 23.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 32
+text = "Available Cosmetics"
+horizontal_alignment = 1
+
+[node name="ScrollContainer" type="ScrollContainer" parent="CosmeticsPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+horizontal_scroll_mode = 0
+
+[node name="CosmeticsGrid" type="GridContainer" parent="CosmeticsPanel/ScrollContainer"]
+layout_mode = 2
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 10
+columns = 2
+
+[node name="ControlsContainer" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -78.0
+offset_top = -31.0
+offset_right = 78.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="ApplyButton" type="Button" parent="ControlsContainer"]
+custom_minimum_size = Vector2(120, 40)
+layout_mode = 2
+text = "Apply"
+
+[node name="ResetButton" type="Button" parent="ControlsContainer"]
+custom_minimum_size = Vector2(120, 40)
+layout_mode = 2
+text = "Reset"
+
+[node name="BackButton" type="Button" parent="ControlsContainer"]
+custom_minimum_size = Vector2(120, 40)
+layout_mode = 2
+text = "Back"
+
+[connection signal="pressed" from="ControlsContainer/ApplyButton" to="." method="_on_apply_button_pressed"]
+[connection signal="pressed" from="ControlsContainer/ResetButton" to="." method="_on_reset_button_pressed"]
+[connection signal="pressed" from="ControlsContainer/BackButton" to="." method="_on_back_button_pressed"]

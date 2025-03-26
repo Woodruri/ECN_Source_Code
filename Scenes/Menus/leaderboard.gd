@@ -4,7 +4,7 @@ extends Control
 @onready var planet_list = $MarginContainer/VBoxContainer/LeaderboardContainer/PlanetContainer/PlanetList
 @onready var planet_selector = $MarginContainer/VBoxContainer/LeaderboardContainer/PlanetContainer/PlanetSelector
 @onready var title_label = $MarginContainer/VBoxContainer/TitleLabel
-@onready var user_selector = $MarginContainer/VBoxContainer/UserSelector
+@onready var user_selector = $MarginContainer/VBoxContainer/UserSelectorContainer/UserSelector
 
 var current_planet = "Planet_1"
 
@@ -167,4 +167,26 @@ func _on_planet_selected(index: int):
 	update_leaderboards()
 
 func _on_back_button_pressed() -> void:
-	get_tree().change_scene_to_file("res://Scenes/Menus/menu.tscn")
+	print("Attempting to return to menu...")
+	
+	# Save current user data before switching scenes
+	DataHandler.save_dictionary_to_file(DataHandler.employees, DataHandler.employees_path)
+	DataHandler.save_dictionary_to_file(DataHandler.reports, DataHandler.reports_path)
+	DataHandler.save_dictionary_to_file(DataHandler.relationships, DataHandler.relationships_path)
+	
+	# Use a more reliable scene loading approach with correct case
+	var error = get_tree().change_scene_to_file("res://Scenes/Menus/Menu.tscn")
+	if error != OK:
+		print("Error changing to menu scene. Error code: ", error)
+		# Try loading from the packed scene with correct case
+		var packed_scene = load("res://Scenes/Menus/Menu.tscn")
+		if packed_scene != null:
+			error = get_tree().change_scene_to_packed(packed_scene)
+			if error != OK:
+				print("Error with packed scene loading. Error code: ", error)
+				return
+		else:
+			print("Failed to load menu scene")
+			return
+	
+	print("Successfully changed to menu scene")

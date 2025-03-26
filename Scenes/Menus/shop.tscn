@@ -1,6 +1,6 @@
-[gd_scene load_steps=2 format=3 uid="uid://b2gripw0q0040"]
+[gd_scene load_steps=2 format=3 uid="uid://bci8xubm52o87"]
 
-[ext_resource type="Script" uid="uid://d0jlqpw36o11u" path="res://Scenes/Menus/shop.gd" id="1_shop"]
+[ext_resource type="Script" uid="uid://bjs2hyypvsb4r" path="res://Scenes/Menus/shop.gd" id="1_shop"]
 
 [node name="Shop" type="Control"]
 layout_mode = 3
@@ -11,29 +11,29 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_shop")
 
-[node name="Background" type="ColorRect"]
+[node name="Background" type="ColorRect" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.12, 0.12, 0.12, 1)
+color = Color(0.121569, 0.121569, 0.121569, 1)
 
-[node name="Title" type="Label"]
+[node name="Title" type="Label" parent="."]
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
-offset_left = -43.5
-offset_right = 43.5
-offset_bottom = 26.0
+offset_left = -20.0
+offset_right = 20.0
+offset_bottom = 23.0
 grow_horizontal = 2
 theme_override_font_sizes/font_size = 32
 text = "Shop"
 horizontal_alignment = 1
 
-[node name="ResourcesLabel"]
+[node name="ResourcesLabel" type="Label" parent="."]
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
@@ -41,46 +41,80 @@ anchor_right = 1.0
 offset_left = -200.0
 offset_top = 10.0
 offset_right = -10.0
-offset_bottom = 36.0
+offset_bottom = 45.0
 grow_horizontal = 0
+theme_override_font_sizes/font_size = 16
 text = "Gas: 0 | Scrap: 0"
 horizontal_alignment = 2
 
-[node name="ShopContainer" type="VBoxContainer"]
+[node name="ShopContainer" type="VBoxContainer" parent="."]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -200.0
-offset_top = -150.0
-offset_right = 200.0
-offset_bottom = 150.0
+offset_left = -250.0
+offset_top = -180.0
+offset_right = 250.0
+offset_bottom = 180.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 10
 
-[node name="ItemList" type="ItemList" parent="ShopContainer"]
-custom_minimum_size = Vector2(0, 200)
+[node name="TabContainer" type="TabContainer" parent="ShopContainer"]
 layout_mode = 2
 size_flags_vertical = 3
+tab_alignment = 1
+current_tab = 0
 
-[node name="DescriptionLabel" type="Label"]
+[node name="Cosmetics" type="Control" parent="ShopContainer/TabContainer"]
 layout_mode = 2
-text = "Select an item to see its description"
-horizontal_alignment = 1
-autowrap_mode = 3
+metadata/_tab_index = 0
 
-[node name="BuyButton" type="Button"]
+[node name="CosmeticsList" type="ItemList" parent="ShopContainer/TabContainer/Cosmetics"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_vertical = 3
+
+[node name="Drones" type="Control" parent="ShopContainer/TabContainer"]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 1
+
+[node name="DronesList" type="ItemList" parent="ShopContainer/TabContainer/Drones"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_vertical = 3
+
+[node name="DescriptionLabel" type="Label" parent="ShopContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Select an item to see its description!"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="BuyButton" type="Button" parent="ShopContainer"]
 layout_mode = 2
 size_flags_horizontal = 4
 disabled = true
 text = "Buy"
 
-[node name="BackButton" type="Button"]
+[node name="BackButton" type="Button" parent="ShopContainer"]
 layout_mode = 2
 size_flags_horizontal = 4
 text = "Back"
 
+[connection signal="tab_changed" from="ShopContainer/TabContainer" to="." method="_on_tab_container_tab_changed"]
+[connection signal="item_selected" from="ShopContainer/TabContainer/Cosmetics/CosmeticsList" to="." method="_on_cosmetics_list_item_selected"]
+[connection signal="item_selected" from="ShopContainer/TabContainer/Drones/DronesList" to="." method="_on_drones_list_item_selected"]
+[connection signal="pressed" from="ShopContainer/BuyButton" to="." method="_on_buy_button_pressed"]
 [connection signal="pressed" from="ShopContainer/BackButton" to="." method="_on_back_button_pressed"]

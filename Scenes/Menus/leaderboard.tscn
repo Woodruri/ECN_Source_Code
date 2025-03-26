@@ -47,11 +47,11 @@ alignment = 1
 
 [node name="Label" type="Label" parent="MarginContainer/VBoxContainer/UserSelectorContainer"]
 layout_mode = 2
+theme_override_font_sizes/font_size = 16
 text = "View as User: "
 
-[node name="UserSelector" type="OptionButton" parent="MarginContainer/VBoxContainer"]
+[node name="UserSelector" type="OptionButton" parent="MarginContainer/VBoxContainer/UserSelectorContainer"]
 layout_mode = 2
-size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 16
 alignment = 1
 

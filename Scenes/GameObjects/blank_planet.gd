@@ -22,9 +22,9 @@ step: int, the step along the path on the main game
 """
 
 # Orbit Parameters
-const BASE_ORBIT_RADIUS = 25
-const RADIUS_INCREMENT = 20
-const MAX_ROCKETS_PER_ORBIT = 8
+const BASE_ORBIT_RADIUS = 35
+const RADIUS_INCREMENT = 25
+const MAX_ROCKETS_PER_ORBIT = 6
 var rocket_orbits = {}
 
 
@@ -181,17 +181,31 @@ func get_orbit_data_for_rocket(rocket_id: String) -> Dictionary:
 	if not rocket_orbits.has(rocket_id):
 		rocket_orbits[rocket_id] = true
 	
-	# Calculate orbit radius based on planet scale
-	var orbit_radius = BASE_ORBIT_RADIUS * scale.x
-	
-	# Calculate even spacing between rockets
 	var total_rockets = rocket_orbits.size()
-	var angle_step = (2 * PI) / total_rockets
-	var rocket_index = rocket_orbits.keys().find(rocket_id)
-	var angle = angle_step * rocket_index
+	
+	# Determine which orbit this rocket should be in
+	var orbit_level = (total_rockets - 1) / MAX_ROCKETS_PER_ORBIT
+	
+	# Calculate orbit radius based on planet scale and orbit level
+	var orbit_radius = (BASE_ORBIT_RADIUS + (orbit_level * RADIUS_INCREMENT)) * scale.x
+	
+	# Calculate how many rockets are in the current orbit
+	var rockets_in_current_orbit = min(total_rockets - (orbit_level * MAX_ROCKETS_PER_ORBIT), MAX_ROCKETS_PER_ORBIT)
+	
+	# Calculate even spacing between rockets in this orbit
+	var angle_step = (2 * PI) / rockets_in_current_orbit
+	
+	# Calculate this rocket's position in the current orbit
+	var position_in_orbit = (total_rockets - 1) % MAX_ROCKETS_PER_ORBIT
+	
+	# Calculate the angle (plus a small random offset for visual variety)
+	var angle = angle_step * position_in_orbit
+	
+	# Add a small random offset to the radius for visual variety
+	var radius_variation = randf_range(-5, 5) * scale.x
 	
 	return {
-		"radius": orbit_radius,
+		"radius": orbit_radius + radius_variation,
 		"angle": angle
 	}
 
@@ -201,6 +215,11 @@ func remove_rocket_from_orbit(rocket_id: String):
 
 func center_planet_label() -> void:
 	if planet_label:
-		# Simple centered positioning
-		planet_label.position = Vector2(0, 30)  # Just move it down from the planet center
-		planet_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER  # Center the text
+		# Fixed position below the planet
+		planet_label.position = Vector2(0, 25)  # Fixed distance below planet
+		
+		# Fixed scale that works well with the current setup
+		planet_label.scale = Vector2(0.2, 0.2)  # Smaller fixed scale
+		
+		# Ensure text is centered
+		planet_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
