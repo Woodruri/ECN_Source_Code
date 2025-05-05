@@ -37,10 +37,11 @@ ECN_Game_Space/
    - Map and level components in `Scenes/MapStuff/`
 
 3. **Middleware Server**
-   - WebSocket-based server for real-time communication
+   - FastAPI-based REST server for data persistence
+   - SQLite database for storage
    - Handles game state synchronization
-   - Manages player connections and broadcasting
-   - Located in `server/middleware_server.py`
+   - Manages player data and resources
+   - Located in `Database/`
 
 4. **Configuration**
    - Project settings in `project.godot`
@@ -48,24 +49,32 @@ ECN_Game_Space/
 
 ## Getting Started
 
-### Prerequisites
+### Game Requirements
+- Godot Engine 4.4 or higher
+- Python 3.8 or higher
+- SQLite (included with Python)
 
-- Godot Engine 4.4 or later
-- Python 3.8 or later (for middleware server)
-- Git (for version control)
+### Python Dependencies
+Install the required Python packages:
+```bash
+pip install -r (whatever)/requirements.txt
+```
+Each folder may have different requirements for different needs, to avoid bloat, I would advise using a venv
 
 ### Setup
 
-1. Clone the repository
-2. Open the project in Godot Engine
-3. Set up the middleware server:
-   ```bash
-   cd server
-   pip install -r requirements.txt
-   python middleware_server.py
-   ```
+## Setup
 
-### Running the Game
+### Server Setup
+1. Initialize the database:
+```bash
+python Database/init_db.py
+```
+
+2. Start the server:
+```bash
+python Database/run_server.py
+```
 
 1. Start the middleware server (see Setup section)
 2. Open the project in Godot Engine
@@ -92,17 +101,13 @@ ECN_Game_Space/
 
 ### Server Communication
 
-The middleware server provides the following features:
+The server provides the following features:
 
-1. **Real-time State Synchronization**
+1. **State Synchronization**
    - Players can update their game state
-   - State changes are broadcast to all connected clients
+   - State changes are stored in SQLite database
    - Clients can request current state information
 
-3. **Connection Management**
-   - Automatic client registration and cleanup
-   - Connection status monitoring
-   - Error handling and logging
 
 ### Best Practices
 
@@ -114,12 +119,13 @@ The middleware server provides the following features:
 2. **Data Handling**
    - Always use the provided handlers for data operations
    - Implement proper error handling
-   - Cache data when appropriate
+   - Cache data when it feels appropriate
 
 3. **Performance**
    - Use object pooling for frequently spawned objects
    - Avoid too too many shaders and textures
    - Implement proper cleanup in `_exit_tree()` (if necessary, you can probably ignore this)
+   - Be aware of async/await delays in the current system
 
 4. **Server Communication**
    - Implement proper error handling for network operations
