@@ -33,91 +33,144 @@ theme_override_font_sizes/font_size = 32
 text = "Customize Ship"
 horizontal_alignment = 1
 
-[node name="ShipPreviewContainer" type="SubViewportContainer" parent="."]
+[node name="MainContainer" type="HBoxContainer" parent="."]
 layout_mode = 1
-anchors_preset = 9
-anchor_bottom = 1.0
-offset_top = 69.0
-offset_right = 400.0
-grow_vertical = 2
-stretch = true
-
-[node name="SubViewport" type="SubViewport" parent="ShipPreviewContainer"]
-transparent_bg = true
-handle_input_locally = false
-size = Vector2i(400, 579)
-
-[node name="CosmeticsPanel" type="Panel" parent="."]
-layout_mode = 1
-anchors_preset = 6
-anchor_left = 1.0
+anchors_preset = 8
+anchor_left = 0.5
 anchor_top = 0.5
-anchor_right = 1.0
+anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -400.0
-offset_top = -300.0
-offset_bottom = 300.0
-grow_horizontal = 0
-grow_vertical = 2
-
-[node name="CosmeticsTitle" type="Label" parent="CosmeticsPanel"]
-layout_mode = 1
-anchors_preset = 5
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -20.0
-offset_right = 20.0
-offset_bottom = 23.0
+offset_top = -180.0
+offset_right = 400.0
+offset_bottom = 180.0
 grow_horizontal = 2
-theme_override_font_sizes/font_size = 32
-text = "Available Cosmetics"
-horizontal_alignment = 1
+grow_vertical = 2
+theme_override_constants/separation = 20
 
-[node name="ScrollContainer" type="ScrollContainer" parent="CosmeticsPanel"]
+[node name="CustomizeContainer" type="PanelContainer" parent="MainContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MainContainer/CustomizeContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="TabContainer" type="TabContainer" parent="MainContainer/CustomizeContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+tab_alignment = 1
+current_tab = 0
+
+[node name="Paint" type="Control" parent="MainContainer/CustomizeContainer/VBoxContainer/TabContainer"]
+layout_mode = 2
+metadata/_tab_index = 0
+
+[node name="PaintList" type="ItemList" parent="MainContainer/CustomizeContainer/VBoxContainer/TabContainer/Paint"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-horizontal_scroll_mode = 0
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 16
 
-[node name="CosmeticsGrid" type="GridContainer" parent="CosmeticsPanel/ScrollContainer"]
+[node name="Exhaust" type="Control" parent="MainContainer/CustomizeContainer/VBoxContainer/TabContainer"]
+visible = false
 layout_mode = 2
-theme_override_constants/h_separation = 10
-theme_override_constants/v_separation = 10
-columns = 2
+metadata/_tab_index = 1
 
-[node name="ControlsContainer" type="HBoxContainer" parent="."]
+[node name="ExhaustList" type="ItemList" parent="MainContainer/CustomizeContainer/VBoxContainer/TabContainer/Exhaust"]
 layout_mode = 1
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
+anchors_preset = 15
+anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -78.0
-offset_top = -31.0
-offset_right = 78.0
 grow_horizontal = 2
-grow_vertical = 0
-theme_override_constants/separation = 20
+grow_vertical = 2
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 16
+
+[node name="Wings" type="Control" parent="MainContainer/CustomizeContainer/VBoxContainer/TabContainer"]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 2
+
+[node name="WingsList" type="ItemList" parent="MainContainer/CustomizeContainer/VBoxContainer/TabContainer/Wings"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 16
+
+[node name="DescriptionLabel" type="Label" parent="MainContainer/CustomizeContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Select a cosmetic to see its description!"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="ButtonContainer" type="HBoxContainer" parent="MainContainer/CustomizeContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
 alignment = 1
 
-[node name="ApplyButton" type="Button" parent="ControlsContainer"]
+[node name="ApplyButton" type="Button" parent="MainContainer/CustomizeContainer/VBoxContainer/ButtonContainer"]
 custom_minimum_size = Vector2(120, 40)
 layout_mode = 2
+size_flags_horizontal = 4
 text = "Apply"
 
-[node name="ResetButton" type="Button" parent="ControlsContainer"]
+[node name="ResetButton" type="Button" parent="MainContainer/CustomizeContainer/VBoxContainer/ButtonContainer"]
 custom_minimum_size = Vector2(120, 40)
 layout_mode = 2
+size_flags_horizontal = 4
 text = "Reset"
 
-[node name="BackButton" type="Button" parent="ControlsContainer"]
+[node name="BackButton" type="Button" parent="MainContainer/CustomizeContainer/VBoxContainer/ButtonContainer"]
 custom_minimum_size = Vector2(120, 40)
 layout_mode = 2
+size_flags_horizontal = 4
 text = "Back"
 
-[connection signal="pressed" from="ControlsContainer/ApplyButton" to="." method="_on_apply_button_pressed"]
-[connection signal="pressed" from="ControlsContainer/ResetButton" to="." method="_on_reset_button_pressed"]
-[connection signal="pressed" from="ControlsContainer/BackButton" to="." method="_on_back_button_pressed"]
+[node name="PreviewContainer" type="PanelContainer" parent="MainContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MainContainer/PreviewContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="PreviewArea" type="SubViewportContainer" parent="MainContainer/PreviewContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+stretch = true
+
+[node name="SubViewport" type="SubViewport" parent="MainContainer/PreviewContainer/VBoxContainer/PreviewArea"]
+handle_input_locally = false
+size = Vector2i(2, 2)
+render_target_update_mode = 4
+
+[node name="Background" type="ColorRect" parent="MainContainer/PreviewContainer/VBoxContainer/PreviewArea/SubViewport"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.0784314, 0.0784314, 0.0784314, 1)
+
+[node name="PreviewRocket" type="Node2D" parent="MainContainer/PreviewContainer/VBoxContainer/PreviewArea/SubViewport"]
+position = Vector2(150, 150)
+
+[connection signal="tab_changed" from="MainContainer/CustomizeContainer/VBoxContainer/TabContainer" to="." method="_on_tab_container_tab_changed"]
+[connection signal="item_selected" from="MainContainer/CustomizeContainer/VBoxContainer/TabContainer/Paint/PaintList" to="." method="_on_paint_list_item_selected"]
+[connection signal="item_selected" from="MainContainer/CustomizeContainer/VBoxContainer/TabContainer/Exhaust/ExhaustList" to="." method="_on_exhaust_list_item_selected"]
+[connection signal="item_selected" from="MainContainer/CustomizeContainer/VBoxContainer/TabContainer/Wings/WingsList" to="." method="_on_wings_list_item_selected"]
+[connection signal="pressed" from="MainContainer/CustomizeContainer/VBoxContainer/ButtonContainer/ApplyButton" to="." method="_on_apply_button_pressed"]
+[connection signal="pressed" from="MainContainer/CustomizeContainer/VBoxContainer/ButtonContainer/ResetButton" to="." method="_on_reset_button_pressed"]
+[connection signal="pressed" from="MainContainer/CustomizeContainer/VBoxContainer/ButtonContainer/BackButton" to="." method="_on_back_button_pressed"]

@@ -161,7 +161,7 @@ func close_menu():
 func load_leaderboard():
 	leaderboardList.clear()
 	
-	var leaderboard_data = DataHandler.get_planet_leaderboard(planet_data.get("id", "Unknown"), 10)
+	var leaderboard_data = await DataHandler.get_planet_leaderboard(planet_data.get("id", "Unknown"), 10)
 	
 	for entry in leaderboard_data:
 		leaderboardList.add_item(

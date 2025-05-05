@@ -1,723 +1,701 @@
 extends Node
 
-#This script covers almost all data I/O between the game and the backend
+# Constants
+var SERVER_URL = "http://localhost:8000"  # Can be changed in _ready()
+const API_VERSION = "v1"
 
-#information regarding data the uglier data persistence
-@export var employees_path: String = "res://data/persistent_storage/employees.json"
-@export var reports_path: String = "res://data/persistent_storage/reports.json"
-@export var relationships_path: String = "res://data/persistent_storage/relationships.json"
-@export var leaderboard_path: String = "res://data/persistent_storage/leaderboard.json"
-@export var points_allocated_path: String = "res://data/persistent_storage/points_allocated.json"
-@export var upgrades_path: String = "res://data/persistent_storage/upgrades.json"
+# User data
+var current_user_id: String = ""
 
-#information that pertains traversal of the world map/resources
-@export var materials_path: String = "res://data/persistent_storage/materials.json"
-@export var rockets_path: String = "res://data/persistent_storage/rockets.json"
-@export var rocket_positions_path: String = "res://data/persistent_storage/rocket_positions.json"
+# Local player data (stored persistently)
+var local_player_data: Dictionary = {
+	"id": "",
+	"name": "",
+	"points": 0,
+	"rank": 1,
+	"resources": {
+		"gas": 0,
+		"scrap": 0
+	}
+}
 
-# Add these new export variables among the other export variables
-@export var cosmetics_path: String = "res://data/persistent_storage/cosmetics.json"
-@export var drones_path: String = "res://data/persistent_storage/drones.json"
+# Game state (stored persistently)
+var game_state: Dictionary = {
+	"current_planet": "Planet_1",
+	"other_players": {}  # Only stores other players' positions: {player_id: planet_id}
+}
 
-###################################################### DICTIONARIES ##################################################################
-
-
-#dictionaries for memory access to this info
-var employees: Dictionary = {}
-'''
-employee_id: 
-			"assignee_name": Str
-			"assignee_id": Str
-'''
-var reports: Dictionary = {}
-'''
-report_id: 
-			"id": Str
-			"RV_executor": Str
-			"r2_count": int
-			"employees": list of employee_ids
-'''
-var relationships: Dictionary = {}
-'''
-relationship_key:
-			"employee_id": Str
-			"report_id": Str
-			"start_date": Str
-			"end_date": Str
-			"is_submitted": bool
-'''
-var points_allocated: Dictionary = {}
-'''
-'''
-
-#traversal dicts
-var materials: Dictionary = {}
-'''
-employee_id:
-			"scrap": int
-			"gas": int
-'''
-var rockets: Dictionary = {}
-'''
-employee_id:
-			"planet_id": Str
-'''
-var rocket_positions: Dictionary = {}
-'''
-planet_id:
-			"employees": list of employee_ids
-'''
-
-#Global user_id, this imitates if the user were to be logged in
-var user_id: String = "lorum"
-
-var upgrades: Dictionary = {}
-'''
-user_id:
-	"gas_efficiency": float
-	"point_multiplier": float
-'''
-
-# Add these new dictionaries to the dictionaries section
+# Temporary data (not stored)
 var cosmetics: Dictionary = {}
-"""
-user_id:
-    cosmetic_id: bool
-"""
+var shop_items: Dictionary = {}
+var ecns: Array = []
 
-var drones: Dictionary = {}
-"""
-user_id:
-    drone_id: int (count of drones)
-"""
+# Local data storage
+var reports: Dictionary = {}
+var relationships: Dictionary = {}
+var points_allocated: Dictionary = {}
+var relationships_path: String = "user://relationships.json"
+var player_data_path: String = "user://player_data.json"  # Path for local player data
+var game_state_path: String = "user://game_state.json"    # Path for game state
 
-func _ready():
-	# Ensure data directories exist
-	var dir = DirAccess.open("res://")
-	if not dir.dir_exists("data"):
-		dir.make_dir("data")
-	if not dir.dir_exists("data/persistent_storage"):
-		dir.make_dir("data/persistent_storage")
+# Static instance
+static var instance: Node = null
+
+# Called when the node enters the scene tree for the first time.
+func _ready() -> void:
+	print("DataHandler initializing...")
 	
-	# Initialize dictionaries if needed
-	load_all_data()
-
-func set_user(new_user_id: String) -> void:
-	user_id = new_user_id
-
-####################################################### PARSING FUNCS #################################################################
-
-#verifies selected file
-func parse_data(file_path: String):
-	print("Selected file to process: ", file_path)
-	load_all_data()
-	parse_csv(file_path)
+	# Set the static instance
+	instance = self
 	
-func parse_csv(file_path: String):
-	#opening csv file
-	var file = FileAccess.open(file_path, FileAccess.READ)
-	if not file:
-		print("Failed to open file: ", file)
-		print("File error: ", FileAccess.get_open_error())
-		return
-		
-	var csv_lines = file.get_as_text().split("\n")
-	#going through each row
-	for i in range(csv_lines.size()):
-		#i == 0 skips header, lines[i].strip_edges() == "" skips empty lines
-		if i == 0 or csv_lines[i].strip_edges() == "":
-			continue
-		
-		var row = csv_lines[i].split(",")
-		
-		#dictionary containing our import data
-		var import_data = {
-			"report_id" : row[0].strip_edges(),
-			"assignee_name" : row[1].strip_edges(),
-			"assignee_id" : row[2].strip_edges(),
-			"personnel_number" : row[3].strip_edges(),
-			"organization_unit" : row[4].strip_edges(),
-			"assignee_email" : row[5].strip_edges(),
-			"RV_executor" : row[6].strip_edges(),
-			"start_date" : row[7].strip_edges(),
-			"end_date" : row[8].strip_edges(),
-			"r2_count" : row[9].strip_edges()
-		}
-		
-		# Add to reports if the report ID doesn't exist in that list
-		if not reports.has(import_data["report_id"]):
-			reports[import_data["report_id"]] = {
-				"id": import_data["report_id"], 
-				"RV_executor": import_data["RV_executor"],
-				"r2_count": int(import_data["r2_count"]),
-				"employees" : [import_data["assignee_id"]],
-				"status": "In Progress"
-				}
-		else:
-			pass #This should eventually update new information for a given report
-		
-		# Add to employees if the employees ID doesn't exist in that list
-		if not employees.has(import_data["assignee_id"]):
-			employees[import_data["assignee_id"]] = {
-				"assignee_name" : import_data["assignee_name"],
-				"assignee_id" : import_data["assignee_id"],
-				"reports" : [import_data["report_id"]],
-				#"personnel_number" : import_data["personnel_number"],
-			}
-		else:
-			pass #This should update new information for a given employee as new info is updated
-		
-		# Add the employee to the report's employees list if not already present
-		if reports.has(import_data["report_id"]):
-			if "employees" in reports[import_data["report_id"]]:
-				if not import_data["assignee_id"] in reports[import_data["report_id"]]["employees"]:
-					reports[import_data["report_id"]]["employees"].append(import_data["assignee_id"])
-			else:
-				# Initialize the 'employees' list if it's missing
-				reports[import_data["report_id"]]["employees"] = [import_data["assignee_id"]]
-		else:
-			print("Error: Report ID not found in reports: ", import_data["report_id"])
-
-		# Add the report to the employee's reports list if not already present
-		if employees.has(import_data["assignee_id"]):
-			if "reports" in employees[import_data["assignee_id"]]:
-				if not import_data["report_id"] in employees[import_data["assignee_id"]]["reports"]:
-					employees[import_data["assignee_id"]]["reports"].append(import_data["report_id"])
-			else:
-				# Initialize the 'employees' list if it's missing
-				reports[import_data["report_id"]]["employees"] = [import_data["assignee_id"]]
-		else:
-			print("Error: Report ID not found in reports: ", import_data["report_id"])
-		
-		# Add to relationships if the relationship ID doesn't exist in that list
-		var relationship_key = get_relationship_key(import_data["assignee_id"], import_data["report_id"])
-		if not relationships.has(relationship_key):
-			relationships[relationship_key] = {
-				"employee_id" : import_data["assignee_id"],
-				"report_id" : import_data["report_id"],
-				"start_date" : import_data["start_date"],
-				"end_date" : import_data["end_date"],
-				"is_submitted" : false  # Initialize as false for new relationships
-			}
-			
-		print("parsing complete")
-		save_dictionary_to_file(employees, employees_path)
-		save_dictionary_to_file(reports, reports_path)
-		save_dictionary_to_file(relationships, relationships_path)
-
-
-################################################### STORAGE AND FILE MANIPULATION #####################################################################
+	# Check for command line argument for server URL
+	var args = OS.get_cmdline_args()
+	for arg in args:
+		if arg.begins_with("--server="):
+			SERVER_URL = arg.split("=")[1]
+			print("Using server URL: ", SERVER_URL)
+			break
 	
-#generic function to save any dictionary to its corresponding file, be wise with this function
-func save_dictionary_to_file(data_dictionary: Dictionary, file_path: String):
-	var file = FileAccess.open(file_path, FileAccess.WRITE)
+	print("DataHandler initialized with server URL: ", SERVER_URL)
 	
-	if not file:
-		print("Failed to save Dictionary: %s at filepath: %s", % data_dictionary, file)
-		return
-
-	var jstr = JSON.stringify(data_dictionary)
-	file.store_line(jstr)
-
-#loads a file into a dictionary, be careful with this
-func load_import_data(data_dictionary: Dictionary, file_path: String):
-	#Loads existing data from file
-	print("Loading data from: ", file_path)  # Debug print
+	# Load local data
+	load_local_data()
 	
-	#check if file exists
-	if not FileAccess.file_exists(file_path):
-		print("No file found at: ", file_path)
+	# Test server connection
+	test_server_connection()
+
+# Local Data Management
+func load_local_data() -> void:
+	print("Loading local data...")
+	
+	# Load player data
+	var player_file = FileAccess.open(player_data_path, FileAccess.READ)
+	if player_file:
+		var json = JSON.parse_string(player_file.get_as_text())
+		if json:
+			local_player_data = json
+			current_user_id = json.get("id", "")
+			print("Loaded local player data")
+		player_file.close()
+	
+	# Load game state
+	var game_state_file = FileAccess.open(game_state_path, FileAccess.READ)
+	if game_state_file:
+		var json = JSON.parse_string(game_state_file.get_as_text())
+		if json:
+			game_state = json
+			print("Loaded game state")
+		game_state_file.close()
+
+func save_local_data() -> void:
+	print("Saving local data...")
+	
+	# Save player data
+	var player_file = FileAccess.open(player_data_path, FileAccess.WRITE)
+	if player_file:
+		player_file.store_string(JSON.stringify(local_player_data))
+		player_file.close()
+		print("Saved local player data")
+	
+	# Save game state
+	var game_state_file = FileAccess.open(game_state_path, FileAccess.WRITE)
+	if game_state_file:
+		game_state_file.store_string(JSON.stringify(game_state))
+		game_state_file.close()
+		print("Saved game state")
+
+# Player Management
+func initialize_player_data(user_id: String) -> void:
+	print("Initializing player data for: ", user_id)
+	
+	# Check if we already have local data
+	if current_user_id == user_id and not local_player_data.is_empty():
+		print("Using existing local player data")
 		return
 	
-	var file = FileAccess.open(file_path, FileAccess.READ)
-	if not file:
-		print("Failed to open file: ", file_path)
-		return
-	
-	#Load data into provided dictionary
-	if not file.eof_reached():
-		var curr_line = file.get_line().strip_edges()
-		if curr_line:
-			var parsed_line = JSON.parse_string(curr_line)
-			if parsed_line == null:
-				print("Failed to parse JSON from: ", file_path)
-				return
-				
-			if typeof(parsed_line) == TYPE_ARRAY:
-				# Handle array data
-				if data_dictionary.has("entries"):
-					data_dictionary["entries"] = parsed_line
-				else:
-					print("Dictionary missing 'entries' key for array data")
-			else:
-				# Update the entire dictionary with the parsed data
-				data_dictionary.clear()  # Clear existing data
-				for key in parsed_line:
-					data_dictionary[key] = parsed_line[key]
-			
-			print("Data loaded successfully from: ", file_path)
-			print("Loaded data:", data_dictionary)  # Debug print
-		else:
-			print("Empty file: ", file_path)
-	else:
-		print("Empty file: ", file_path)
-
-func print_data():
-	print("reports:", reports)
-	print("employees:", employees)
-	print("relationships:", relationships)
-	print("points allocated:", points_allocated)
-
-func load_all_data():
-	print("Loading all data...")
-	load_import_data(employees, employees_path)
-	load_import_data(reports, reports_path)
-	load_import_data(relationships, relationships_path)
-	load_import_data(rockets, rockets_path)
-	load_import_data(cosmetics, cosmetics_path)
-	load_import_data(drones, drones_path)
-	
-	# Initialize planet positions if needed
-	initialize_planet_positions()
-	
-	print("Data successfully loaded.")
-
-################################################ STORED OBJECTS ########################################################################
-
-func store_employee(employee_name: String, ID: String):
-	# Extremely inefficient way of handling this, 
-	# it's kinda like going to the grocery store, filling your cart, and then only purchasing a single item every time that you want to buy something
-	load_import_data(employees, employees_path)
-	
-	employees[ID] = {
-		"assignee_name" : employee_name,
-		"assignee_id" : ID,
-	}
-	
-	save_dictionary_to_file(employees, employees_path)
-
-func store_report(ID: String, executor: String, r2_count: int):
-	load_import_data(reports, reports_path)
-	
-	reports[ID] = {
-		"id": ID, 
-		"RV_executor": executor,
-		"r2_count": r2_count
-		}
-		
-	save_dictionary_to_file(employees, employees_path)
-
-#used to streamline getting the relationship key
-func get_relationship_key(employee_id: String, report_id: String):
-	return employee_id + ":" + report_id
-
-func store_relationship(employee_id: String, report_id: String, start_date, close_date):
-	load_import_data(relationships, relationships_path)
-	
-	var relationship_key = get_relationship_key(employee_id, report_id)
-	
-	relationships[relationship_key] = {
-		"employee_id" : employee_id,
-		"report_id" : report_id,
-		"start_date" : start_date,
-		"end_date" : close_date
-	}
-	
-	save_dictionary_to_file(relationships, relationships_path)
-
-func store_materials(employee_id: String, gas: int, scrap: int):
-	# Used to save an employee's materials - local storage only
-	print("DEBUG: Storing materials - Gas:", gas, ", Scrap:", scrap)
-	
-	# Update the local dictionary and save to file
-	load_import_data(materials, materials_path)
-	materials[employee_id] = {
-		"gas": gas,
-		"scrap": scrap
-	}
-	save_dictionary_to_file(materials, materials_path)
-	print("DEBUG: Saved materials to local storage")
-
-func store_allocated_points(employee_id: String, report_id: String, points_dict: Dictionary):
-	#used to save a point allocation event from the point allocation page
-	#format is allocated_points[relationship_key] = {reciever_id1 : points given, reciever_id2 : points given, ...}
-	load_import_data(points_allocated, points_allocated_path)
-	var relationship_key = get_relationship_key(employee_id, report_id)
-	points_allocated[relationship_key] = points_dict
-	save_dictionary_to_file(points_allocated, points_allocated_path)
-
-func reset_data():
-	#used to wipe all the files, useful for debugging
-	employees = {}
-	reports = {}
-	relationships = {}
-	points_allocated = {}
-	materials = {}
-	save_dictionary_to_file({}, employees_path)
-	save_dictionary_to_file({}, reports_path)
-	save_dictionary_to_file({}, relationships_path)
-	save_dictionary_to_file({}, leaderboard_path)
-	save_dictionary_to_file({}, points_allocated_path)
-	save_dictionary_to_file({}, materials_path)
-
-################################################# RETRIEVAL #######################################################################
-
-func calculate_employee_score(employee_id: String) -> int:
-	var base_score = 0
-	
-	# Load reports data
-	load_import_data(reports, reports_path)
-	
-	# Get points from reports
-	for report_id in reports:
-		var report = reports[report_id]
-		if report.get("employees", []).has(employee_id):
-			base_score += int(report.get("r2_count", 0)) * 10
-	
-	return base_score
-
-func get_user_data() -> Dictionary:
-	# Get the current user's data from employees
-	var employee_data = get_employee_from_id(user_id)
-	if not employee_data:
-		return {}
-	
-	# Get user's materials from local storage
-	load_import_data(materials, materials_path)
-	var materials_data = materials.get(user_id, {"gas": 100, "scrap": 50})
-	
-	# Calculate user's points
-	var points = calculate_employee_score(user_id)
-	
-	# Get user's rank from local leaderboard or generate fake entry
-	var rank = 1  # Default to rank 1 for now
-	
-	# Get active ECNs
-	var active_ecns = get_active_ecns(user_id)
-	
-	return {
-		"name": employee_data.get("assignee_name", "Unknown"),
-		"points": points,
+	# Create new player data
+	local_player_data = {
+		"id": user_id,
+		"name": "Player",
+		"points": 0,
+		"rank": 1,
 		"resources": {
-			"gas": materials_data.get("gas", 0),
-			"scrap": materials_data.get("scrap", 0)
-		},
-		"rank": rank,
-		"active_ecns": active_ecns,
-		"upgrades": {
-			"gas_efficiency": 0.0,
-			"point_multiplier": 1.0
+			"gas": 0,
+			"scrap": 0
 		}
 	}
+	current_user_id = user_id
+	
+	# Save locally
+	save_local_data()
+	
+	# Try to sync with server
+	attempt_player_data_sync()
 
-func get_user_id() -> String:
-	return user_id
+func attempt_player_data_sync() -> void:
+	print("Attempting to sync with server...")
+	var http_request = HTTPRequest.new()
+	add_child(http_request)
+	
+	http_request.request_completed.connect(func(result: int, response_code: int, headers: PackedStringArray, body: PackedByteArray):
+		print("Server sync response:")
+		print("- Result: ", result)
+		print("- Response code: ", response_code)
+		
+		if response_code == 201:  # Created
+			print("Player data successfully synced with server")
+		else:
+			print("Warning: Failed to sync with server, will retry later")
+		
+		http_request.queue_free()
+	)
+	
+	var error = http_request.request(
+		"%s/api/%s/users" % [SERVER_URL, API_VERSION],
+		["Content-Type: application/json"],
+		HTTPClient.METHOD_POST,
+		JSON.stringify(local_player_data)
+	)
+	
+	if error != OK:
+		print("Error making server sync request: ", error)
+		http_request.queue_free()
 
-func get_user_materials(employee_id: String) -> Dictionary:
-	# Only use local storage
-	load_import_data(materials, materials_path)
-	print("DEBUG: Loaded materials from local storage: ", materials)
-	return materials.get(employee_id, {"gas": 100, "scrap": 50})
-
-func get_rocket_data(employee_id: String) -> Dictionary:
-	# Local storage only for rocket data
-	load_import_data(rockets, rockets_path)
-	return rockets.get(employee_id, {"planet_id": "Planet_1"})
-
-func get_rocket_position(employee_id: String) -> String:
-	load_import_data(rockets, rockets_path)
-	if rockets.has(employee_id):
-		return rockets[employee_id].get("planet_id", "Planet_1")
-	return "Planet_1"  # Default to Planet_1 if no position found
+# Game State Management
+func get_rocket_data(user_id: String) -> Dictionary:
+	# For local player, return full data
+	if user_id == current_user_id:
+		return {
+			"planet_id": game_state.get("current_planet", "Planet_1"),
+			"player_data": local_player_data
+		}
+	
+	# For other players, only return position
+	return {
+		"planet_id": game_state.get("other_players", {}).get(user_id, "Planet_1")
+	}
 
 func get_rockets_on_planet(planet_id: String) -> Array:
-	# Use local storage to find all rockets on a planet
-	load_import_data(rockets, rockets_path)
-	var planet_rockets = []
+	var rockets = []
 	
-	for rocket_id in rockets:
-		if rockets[rocket_id].get("planet_id", "") == planet_id:
-			planet_rockets.append(rocket_id)
+	# Add local player if on this planet
+	if game_state.get("current_planet") == planet_id:
+		rockets.append(current_user_id)
 	
-	return planet_rockets
+	# Add other players on this planet
+	for player_id in game_state.get("other_players", {}):
+		if game_state.get("other_players", {}).get(player_id) == planet_id:
+			rockets.append(player_id)
+	
+	return rockets
 
-func get_active_ecns(employee_id: String):
-	#takes in a string that is the employee ID, and returns a list of ECN IDs for all ECNs that employee has active
-	# returns [] if no ECNs are found
-	
-	#loading our stored data
-	load_import_data(employees, employees_path)
-	load_import_data(relationships, relationships_path)
-	
-	if employee_id not in employees:
-		return []
-	
-	var employee_data = employees[employee_id]
-	var ECN_list = []
-	
-	# gets a list of each incomplete report
-	#employee_data["reports"] only gets the IDs
-	for item in employee_data["reports"]:
-		var relationship_key = get_relationship_key(employee_id, item)
-		var curr_relationship = relationships[relationship_key]
-		if curr_relationship["is_submitted"] == false:
-			ECN_list.append(item)
-	
-	return ECN_list
-
-func get_employees_from_ecn(ecn_id: String):
-	#takes in a string that is the ecn ID, and returns a list of employee IDs that worked on that ECN
-	# returns [] if no employees are found
-	
-	#loading our stored data
-	load_import_data(reports, reports_path)
-	
-	if ecn_id not in reports:
-		return []
-	
-	var report_data = reports[ecn_id]
-	var emp_list = []
-	
-	# gets a list of each employee on a given ecn
-	#report_data["employees"] only gets the IDs
-	for item in report_data["employees"]:
-		emp_list.append(item)
-	
-	return emp_list
-
-func get_employee_from_id(employee_id: String):
-	#pass in an employee id to get the employee object
-	#horribly inefficient algorithm as this opens and closes the file for each employee, but memory is abundant and life is short
-	
-	load_import_data(employees, employees_path)
-	if employees[employee_id]:
-		return employees[employee_id]
+func store_rocket_position(user_id: String, planet_id: String) -> void:
+	if user_id == current_user_id:
+		game_state["current_planet"] = planet_id
 	else:
-		return false
-
-############################################### LEADERBOARD STUFF #########################################################################
-
-func calculate_leaderboard() -> Array:
-	# Load necessary data
-	load_import_data(employees, employees_path)
-	load_import_data(reports, reports_path)
+		if not game_state.has("other_players"):
+			game_state["other_players"] = {}
+		game_state["other_players"][user_id] = planet_id
 	
-	var leaderboard_data = []
+	save_local_data()
 	
-	# Calculate scores for all employees
-	for employee_id in employees:
-		var employee_data = employees[employee_id]
-		var score = calculate_employee_score(employee_id)
-		leaderboard_data.append({
-			"id": employee_id,
-			"name": employee_data.get("assignee_name", "Unknown"),
-			"points": score,
-			"rank": 1  # Will be updated after sorting
+	# Sync with server
+	var http_request = HTTPRequest.new()
+	add_child(http_request)
+	
+	http_request.request_completed.connect(func(result: int, response_code: int, headers: PackedStringArray, body: PackedByteArray):
+		if response_code != 200:
+			print("Error syncing rocket position: HTTP ", response_code)
+		http_request.queue_free()
+	)
+	
+	var error = http_request.request(
+		"%s/api/%s/users/%s/game_state" % [SERVER_URL, API_VERSION, user_id],
+		["Content-Type: application/json"],
+		HTTPClient.METHOD_POST,
+		JSON.stringify({
+			"current_planet": planet_id,
+			"current_level": game_state.get("current_level", 1),
+			"score": game_state.get("score", 0)
 		})
+	)
 	
-	# Sort by points in descending order
-	leaderboard_data.sort_custom(func(a, b): return a["points"] > b["points"])
-	
-	# Update ranks
-	for i in range(leaderboard_data.size()):
-		leaderboard_data[i]["rank"] = i + 1
-	
-	# Store leaderboard
-	save_dictionary_to_file({"entries": leaderboard_data}, leaderboard_path)
-	return leaderboard_data
+	if error != OK:
+		print("Error making rocket position request: ", error)
+		http_request.queue_free()
 
-func generate_fake_leaderboard_entries(count: int) -> Array:
-	var fake_entries = []
-	for i in range(count):
-		fake_entries.append({
-			"rank": i + 1,
-			"name": "Player_%d" % (i + 1),
-			"points": randi() % 1000  # Random points between 0 and 999
-		})
-	return fake_entries
+# Resource Management
+func get_user_materials(user_id: String) -> Dictionary:
+	if user_id == current_user_id:
+		return local_player_data.get("resources", {"gas": 0, "scrap": 0})
+	return {"gas": 0, "scrap": 0}  # Other players' resources not stored locally
 
-func get_leaderboard(quantity: int) -> Array:
-	# First try to load from file
-	var stored_data = {}
-	load_import_data(stored_data, leaderboard_path)
-	var leaderboard_data = []
+func store_materials(user_id: String, gas: int, scrap: int) -> void:
+	if user_id == current_user_id:
+		local_player_data["resources"] = {
+			"gas": gas,
+			"scrap": scrap
+		}
+		save_local_data()
+		
+		# Sync with server
+		var http_request = HTTPRequest.new()
+		add_child(http_request)
+		
+		http_request.request_completed.connect(func(result: int, response_code: int, headers: PackedStringArray, body: PackedByteArray):
+			http_request.queue_free()
+		)
+		
+		var error = http_request.request(
+			"%s/api/%s/users/%s/resources" % [SERVER_URL, API_VERSION, user_id],
+			["Content-Type: application/json"],
+			HTTPClient.METHOD_POST,
+			JSON.stringify({
+				"gas": gas,
+				"scrap": scrap
+			})
+		)
+		
+		if error != OK:
+			print("Error syncing resources: ", error)
+			http_request.queue_free()
+
+func test_server_connection() -> void:
+	print("Testing server connection...")
+	var http_request = HTTPRequest.new()
+	add_child(http_request)
 	
-	# If no stored data or empty, calculate new leaderboard
-	if not stored_data.has("entries") or stored_data["entries"].is_empty():
-		leaderboard_data = calculate_leaderboard()
-	else:
-		leaderboard_data = stored_data["entries"]
+	# Connect the signal before making the request
+	http_request.request_completed.connect(func(result: int, response_code: int, headers: PackedStringArray, body: PackedByteArray):
+		print("Server connection test response:")
+		print("- Result: ", result)
+		print("- Response code: ", response_code)
+		print("- Headers: ", headers)
+		print("- Body: ", body.get_string_from_utf8())
+		http_request.queue_free()
+	)
 	
-	# Return requested number of entries
-	if quantity > 0 and quantity < leaderboard_data.size():
-		return leaderboard_data.slice(0, quantity)
-	return leaderboard_data
+	var error = http_request.request(SERVER_URL, [], HTTPClient.METHOD_GET)
+	if error != OK:
+		print("Error testing server connection: ", error)
+		http_request.queue_free()
 
-func get_planet_leaderboard(planet: String, quantity: int) -> Array:
-	# Get global leaderboard first
-	var full_leaderboard = get_leaderboard(999)  # Get all entries
+# Static method to get the instance
+static func get_instance() -> Node:
+	if instance == null:
+		print("Error: DataHandler instance not found!")
+		return null
+	return instance
+
+# Called every frame. 'delta' is the elapsed time since the previous frame.
+func _process(delta: float) -> void:
+	pass
+
+# Helper function to make HTTP requests
+func make_request(endpoint: String, method: HTTPClient.Method, data: Dictionary = {}) -> Dictionary:
+	print("Making request to: ", SERVER_URL, "/api/", API_VERSION, "/", endpoint)
+	print("Method: ", method)
+	print("Data: ", data)
 	
-	# Filter for players on this planet
-	var planet_leaderboard = []
-	for entry in full_leaderboard:
-		var player_planet = get_rocket_position(entry["id"])
-		if player_planet == planet:
-			planet_leaderboard.append(entry)
+	var http_request = HTTPRequest.new()
+	add_child(http_request)
 	
-	# Return requested number of entries
-	if quantity > 0 and quantity < planet_leaderboard.size():
-		return planet_leaderboard.slice(0, quantity)
-	return planet_leaderboard
-
-#TODO Be careful for doubled up ids
-
-func get_user_upgrades(user_id: String) -> Dictionary:
-	load_import_data(upgrades, upgrades_path)
-	return upgrades.get(user_id, {"gas_efficiency": 0.0, "point_multiplier": 1.0})
-
-func store_upgrades(user_id: String, upgrade_data: Dictionary) -> void:
-	load_import_data(upgrades, upgrades_path)
-	upgrades[user_id] = upgrade_data
-	save_dictionary_to_file(upgrades, upgrades_path)
-	print("DEBUG: Saved upgrades to local storage")
-
-# Update the traverse cost calculation to use gas efficiency
-func get_traverse_cost(planet_data: Dictionary) -> Dictionary:
-	var user_id = get_user_id()
-	var user_upgrades = get_user_upgrades(user_id)
-	var efficiency = 1.0 - user_upgrades.get("gas_efficiency", 0.0)
+	var url = "%s/api/%s/%s" % [SERVER_URL, API_VERSION, endpoint]
+	var headers = ["Content-Type: application/json"]
+	var body = JSON.stringify(data) if not data.is_empty() else ""
 	
+	print("Full URL: ", url)
+	print("Headers: ", headers)
+	print("Body: ", body)
+	
+	var error = http_request.request(url, headers, method, body)
+	if error != OK:
+		print("Error making request: ", error)
+		http_request.queue_free()
+		return {}
+	
+	# Wait for the request to complete
+	var result = await http_request.request_completed
+	
+	# Remove the HTTPRequest node
+	http_request.queue_free()
+	
+	# Parse the response
+	var response = result[0]
+	var response_code = result[1]
+	var response_headers = result[2]
+	var response_body = result[3]
+	
+	print("Response code: ", response_code)
+	print("Response headers: ", response_headers)
+	print("Response body: ", response_body.get_string_from_utf8())
+	
+	if response_code != 200:
+		print("Error: HTTP request failed with code ", response_code)
+		return {}
+	
+	var json = JSON.parse_string(response_body.get_string_from_utf8())
+	if json == null:
+		print("Error: Invalid JSON response")
+		return {}
+		
+	return json
+
+# User Management
+func get_user_id() -> String:
+	return current_user_id
+
+func set_user_id(user_id: String) -> void:
+	current_user_id = user_id
+
+# Cosmetic Management
+func get_user_cosmetics(user_id: String) -> Dictionary:
+	var response = await make_request("users/%s/cosmetics" % user_id, HTTPClient.METHOD_GET)
+	cosmetics = response
+	return response
+
+func update_user_cosmetics(user_id: String, cosmetics_data: Dictionary) -> void:
+	await make_request("users/%s/cosmetics" % user_id, HTTPClient.METHOD_PUT, cosmetics_data)
+	cosmetics = await get_user_cosmetics(user_id)
+
+# Shop Management
+func get_shop_items() -> Dictionary:
+	var response = await make_request("shop/items", HTTPClient.METHOD_GET)
+	shop_items = response
+	return response
+
+func purchase_item(user_id: String, item_id: String) -> void:
+	await make_request("shop/purchase", HTTPClient.METHOD_POST, {
+		"user_id": user_id,
+		"item_id": item_id
+	})
+
+# Leaderboard Management
+func get_global_leaderboard(limit: int = 10) -> Array:
+	var response = await make_request("leaderboard/global?limit=%d" % limit, HTTPClient.METHOD_GET)
+	return response.get("entries", [])
+
+func get_planet_leaderboard(planet_id: String, limit: int = 10) -> Array:
+	var response = await make_request("leaderboard/planet/%s?limit=%d" % [planet_id, limit], HTTPClient.METHOD_GET)
+	return response.get("entries", [])
+
+# ECN Management
+func get_user_ecns(user_id: String) -> Array:
+	var response = await make_request("users/%s/ecns" % user_id, HTTPClient.METHOD_GET)
+	ecns = response.get("ecns", [])
+	return ecns
+
+func submit_ecn(user_id: String, ecn_id: String) -> void:
+	await make_request("ecns/submit", HTTPClient.METHOD_POST, {
+		"user_id": user_id,
+		"ecn_id": ecn_id
+	})
+
+# Employee Management
+func get_employee_from_id(employee_id: String) -> Dictionary:
+	# For local player, return full data
+	if employee_id == current_user_id:
+		return local_player_data
+	
+	# For other players, only return position
 	return {
-		"gas": ceil(planet_data.resource_cost.gas * efficiency),
-		"scrap": planet_data.resource_cost.scrap
+		"id": employee_id,
+		"current_planet": game_state.get("other_players", {}).get(employee_id, "Planet_1")
 	}
 
-func store_rocket_position(employee_id: String, planet_id: String) -> void:
-	# Store rocket position in local storage only
-	load_import_data(rockets, rockets_path)
-	rockets[employee_id] = {"planet_id": planet_id}
-	save_dictionary_to_file(rockets, rockets_path)
-	print("DEBUG: Saved rocket position to local storage")
+func get_employee_name(employee_id: String) -> String:
+	if employee_id == current_user_id:
+		return local_player_data.get("name", "Player")
+	return "Player"  # Other players' names not stored locally
 
-func initialize_player_data(employee_id: String) -> void:
-	# Initialize materials if not set
-	var current_materials = get_user_materials(employee_id)
-	if current_materials.is_empty() or not (current_materials.has("gas") and current_materials.has("scrap")):
-		store_materials(employee_id, 100, 50)
-		print("DEBUG: Initialized default materials for player")
-	
-	# Initialize rocket position if not set
-	var rocket_data = get_rocket_data(employee_id)
-	if rocket_data.is_empty() or not rocket_data.has("planet_id"):
-		store_rocket_position(employee_id, "Planet_1")
-		print("DEBUG: Initialized default rocket position for player")
-	
-	# Initialize upgrades if not set
-	var user_upgrades = get_user_upgrades(employee_id)
-	if user_upgrades.is_empty():
-		store_upgrades(employee_id, {
-			"gas_efficiency": 0.0,
-			"point_multiplier": 1.0
-		})
-		print("DEBUG: Initialized default upgrades for player")
+func get_employee_points(employee_id: String) -> int:
+	if employee_id == current_user_id:
+		return local_player_data.get("points", 0)
+	return 0  # Other players' points not stored locally
 
-func get_user_ecns() -> Array:
-	'''
-	Returns a list of dictionaries, each containing the title, status, and r2_count of an ECN,
-	distinct from get_active_ecns() because this returns all ECNs that the user has worked on,
-	regardless of whether they are currently active or not
-	'''
-	var user_id = get_user_id()
-	var active_ecns = get_active_ecns(user_id)
-	var ecn_list = []
+func get_employee_rank(employee_id: String) -> int:
+	if employee_id == current_user_id:
+		return local_player_data.get("rank", 1)
+	return 1  # Other players' ranks not stored locally
+
+func store_employee(employee_id: String, employee_data: Dictionary) -> void:
+	print("Storing employee data for: ", employee_id)
 	
-	load_import_data(reports, reports_path)
-	load_import_data(relationships, relationships_path)
-	
-	for ecn_id in active_ecns:
-		if ecn_id in reports:
-			var report = reports[ecn_id]
-			var relationship_key = get_relationship_key(user_id, ecn_id)
-			var is_submitted = relationships.get(relationship_key, {}).get("is_submitted", false)
-			var status = "In Progress"
-			if is_submitted:
-				status = "Submitted"
-			elif report.get("status") == "Completed":
-				status = "Completed"
+	# Only store local player's full data
+	if employee_id == current_user_id:
+		local_player_data = employee_data
+		save_local_data()
+		attempt_player_data_sync()
+	else:
+		# For other players, only store their position if they're on a planet
+		if employee_data.has("current_planet"):
+			if not game_state.has("other_players"):
+				game_state["other_players"] = {}
+			game_state["other_players"][employee_id] = employee_data["current_planet"]
+			save_local_data()
+
+# Report Management
+func get_active_ecns(user_id: String) -> Array:
+	var active_reports = []
+	for report_id in reports:
+		var report = reports[report_id]
+		if report and report.get("status") == "Active":
+			active_reports.append(report_id)
+	return active_reports
+
+func get_report_history(user_id: String) -> Array:
+	var history = []
+	for report_id in reports:
+		var report = reports[report_id]
+		if report and report.get("status") == "Completed":
+			var relationship_key = get_relationship_key(user_id, report_id)
+			var relationship = relationships.get(relationship_key, {})
+			var points_data = points_allocated.get(relationship_key, {})
 			
-			var ecn_data = {
-				"title": report["id"],
-				"status": status,
-				"r2_count": report["r2_count"]
-			}
-			ecn_list.append(ecn_data)
-	
-	return ecn_list
-
-func mark_report_as_submitted(employee_id: String, report_id: String) -> void:
-	# Load relationships data
-	load_import_data(relationships, relationships_path)
-	
-	# Get the relationship key and update is_submitted
-	var relationship_key = get_relationship_key(employee_id, report_id)	
-	if relationships.has(relationship_key):
-		relationships[relationship_key]["is_submitted"] = true
-		save_dictionary_to_file(relationships, relationships_path)
-		
-		# Update report status if all employees have submitted
-		var all_submitted = true
-		var employees_list = get_employees_from_ecn(report_id)
-		for emp_id in employees_list:
-			var emp_relationship_key = get_relationship_key(emp_id, report_id)
-			if relationships.has(emp_relationship_key) and not relationships[emp_relationship_key]["is_submitted"]:
-				all_submitted = false
-				break
-		
-		if all_submitted:
-			load_import_data(reports, reports_path)
-			if reports.has(report_id):
-				reports[report_id]["status"] = "Completed"
-				save_dictionary_to_file(reports, reports_path)
+			history.append({
+				"report_id": report_id,
+				"relationship": relationship,
+				"points_data": points_data
+			})
+	return history
 
 func get_report_status(report_id: String) -> String:
-	load_import_data(reports, reports_path)
-	if reports.has(report_id):
-		return reports[report_id].get("status", "In Progress")
-	return "Unknown"
+	return reports.get(report_id, {}).get("status", "Unknown")
 
-func initialize_planet_positions() -> void:
-	# Load necessary data
-	load_import_data(employees, employees_path)
-	load_import_data(rockets, rockets_path)
+func get_employees_from_ecn(report_id: String) -> Array:
+	var report = reports.get(report_id, {})
+	return report.get("employees", [])
+
+# Relationship Management
+func get_relationship_key(user_id: String, report_id: String) -> String:
+	return user_id + "_" + report_id
+
+func mark_report_as_submitted(user_id: String, report_id: String) -> void:
+	var relationship_key = get_relationship_key(user_id, report_id)
+	if relationship_key in relationships:
+		relationships[relationship_key]["is_submitted"] = true
+		save_relationships()
+
+func store_allocated_points(user_id: String, report_id: String, allocation_data: Dictionary) -> void:
+	var relationship_key = get_relationship_key(user_id, report_id)
+	points_allocated[relationship_key] = allocation_data
+
+# File Management
+func import_all_data_from_file(file_path: String) -> int:
+	var file = FileAccess.open(file_path, FileAccess.READ)
+	if not file:
+		print("Error: Could not open file ", file_path)
+		return ErrorCode.FILE_ERROR
 	
-	# Initialize all employees to Planet_1
-	for employee_id in employees:
-		if not rockets.has(employee_id):
-			rockets[employee_id] = {
-				"planet_id": "Planet_1"
-			}
+	var content = file.get_as_text()
+	file.close()
 	
-	# Save the updated rockets data
-	save_dictionary_to_file(rockets, rockets_path)
+	# Create a multipart form data request
+	var http_request = HTTPRequest.new()
+	add_child(http_request)
+	
+	var url = "%s/api/%s/import/users" % [SERVER_URL, API_VERSION]
+	var headers = ["Content-Type: multipart/form-data"]
+	
+	# Create form data
+	var form_data = PackedByteArray()
+	form_data.append_array("--boundary\r\n".to_utf8_buffer())
+	form_data.append_array("Content-Disposition: form-data; name=\"file\"; filename=\"users.csv\"\r\n".to_utf8_buffer())
+	form_data.append_array("Content-Type: text/csv\r\n\r\n".to_utf8_buffer())
+	form_data.append_array(content.to_utf8_buffer())
+	form_data.append_array("\r\n--boundary--\r\n".to_utf8_buffer())
+	
+	var error = http_request.request(url, headers, HTTPClient.METHOD_POST, form_data)
+	if error != OK:
+		print("Error making request: ", error)
+		http_request.queue_free()
+		return ErrorCode.NETWORK_ERROR
+	
+	# Wait for the request to complete
+	var result = await http_request.request_completed
+	http_request.queue_free()
+	
+	# Parse the response
+	var response = result[0]
+	var response_code = result[1]
+	var response_headers = result[2]
+	var response_body = result[3]
+	
+	if response_code != 200:
+		print("Error: HTTP request failed with code ", response_code)
+		return ErrorCode.NETWORK_ERROR
+	
+	return ErrorCode.SUCCESS
 
-# Add these functions for getting and storing cosmetics
-func get_user_cosmetics(user_id: String) -> Dictionary:
-	load_import_data(cosmetics, cosmetics_path)
-	return cosmetics.get(user_id, {})
+func export_all_data_to_file(file_path: String) -> int:
+	var http_request = HTTPRequest.new()
+	add_child(http_request)
+	
+	var url = "%s/api/%s/export/users" % [SERVER_URL, API_VERSION]
+	var headers = ["Content-Type: application/json"]
+	
+	var error = http_request.request(url, headers, HTTPClient.METHOD_GET)
+	if error != OK:
+		print("Error making request: ", error)
+		http_request.queue_free()
+		return ErrorCode.NETWORK_ERROR
+	
+	# Wait for the request to complete
+	var result = await http_request.request_completed
+	http_request.queue_free()
+	
+	# Parse the response
+	var response = result[0]
+	var response_code = result[1]
+	var response_headers = result[2]
+	var response_body = result[3]
+	
+	if response_code != 200:
+		print("Error: HTTP request failed with code ", response_code)
+		return ErrorCode.NETWORK_ERROR
+	
+	var json = JSON.parse_string(response_body.get_string_from_utf8())
+	if json == null:
+		print("Error: Invalid JSON response")
+		return ErrorCode.PARSE_ERROR
+	
+	# Save the data to file
+	var file = FileAccess.open(file_path, FileAccess.WRITE)
+	if not file:
+		print("Error: Could not open file ", file_path)
+		return ErrorCode.FILE_ERROR
+	
+	file.store_string(json.get("data", ""))
+	file.close()
+	
+	return ErrorCode.SUCCESS
 
-func store_user_cosmetics(user_id: String, user_cosmetics: Dictionary) -> void:
-	load_import_data(cosmetics, cosmetics_path)
-	cosmetics[user_id] = user_cosmetics
-	save_dictionary_to_file(cosmetics, cosmetics_path)
-	print("DEBUG: Saved cosmetics to local storage")
+# Error codes
+enum ErrorCode {
+	SUCCESS = 0,
+	FILE_ERROR = 1,
+	NETWORK_ERROR = 2,
+	PARSE_ERROR = 3
+}
 
-# Add these functions for getting and storing drones
-func get_user_drones(user_id: String) -> Dictionary:
-	load_import_data(drones, drones_path)
-	return drones.get(user_id, {})
+# Data Loading
+func load_all_data() -> void:
+	print("Starting load_all_data...")
+	
+	var user_id = get_user_id()
+	if user_id.is_empty():
+		print("Warning: No user ID set, cannot load data")
+		return
+	
+	print("Loading all data for user: ", user_id)
+	
+	# Load user data
+	print("Loading user data...")
+	var new_user_data = await make_request("users/%s" % user_id, HTTPClient.METHOD_GET)
+	if new_user_data.is_empty():
+		print("Error: Failed to load user data")
+		return
+	local_player_data = new_user_data
+	print("User data loaded: ", local_player_data)
+	
+	# Load resources
+	print("Loading resources...")
+	var new_resources = await make_request("users/%s/resources" % user_id, HTTPClient.METHOD_GET)
+	if new_resources.is_empty():
+		print("Error: Failed to load resources")
+		return
+	
+	# Load game state
+	print("Loading game state...")
+	var new_game_state = await make_request("users/%s/game_state" % user_id, HTTPClient.METHOD_GET)
+	if new_game_state.is_empty():
+		print("Error: Failed to load game state")
+		return
+	game_state = new_game_state
+	print("Game state loaded: ", game_state)
+	
+	# Load cosmetics
+	print("Loading cosmetics...")
+	var new_cosmetics = await make_request("users/%s/cosmetics" % user_id, HTTPClient.METHOD_GET)
+	if new_cosmetics.is_empty():
+		print("Error: Failed to load cosmetics")
+		return
+	cosmetics = new_cosmetics
+	print("Cosmetics loaded: ", cosmetics)
+	
+	# Load shop items
+	print("Loading shop items...")
+	var new_shop_items = await make_request("shop/items", HTTPClient.METHOD_GET)
+	if new_shop_items.is_empty():
+		print("Error: Failed to load shop items")
+		return
+	shop_items = new_shop_items
+	print("Shop items loaded: ", shop_items)
+	
+	# Load ECNs
+	print("Loading ECNs...")
+	var new_ecns = await make_request("users/%s/ecns" % user_id, HTTPClient.METHOD_GET)
+	if new_ecns.is_empty():
+		print("Error: Failed to load ECNs")
+		return
+	ecns = new_ecns.get("ecns", [])
+	print("ECNs loaded: ", ecns)
+	
+	# Load local data
+	print("Loading relationships...")
+	load_relationships()
+	
+	print("Successfully loaded all data for user: ", user_id)
 
-func store_user_drones(user_id: String, user_drones: Dictionary) -> void:
-	load_import_data(drones, drones_path)
-	drones[user_id] = user_drones
-	save_dictionary_to_file(drones, drones_path)
-	print("DEBUG: Saved drones to local storage")
+# Getters for persistent data
+func get_persistent_user_data() -> Dictionary:
+	return local_player_data
+
+func get_persistent_resources() -> Dictionary:
+	return local_player_data.get("resources", {"gas": 0, "scrap": 0})
+
+func get_persistent_game_state() -> Dictionary:
+	return game_state
+
+func get_persistent_cosmetics() -> Dictionary:
+	return cosmetics
+
+func get_persistent_shop_items() -> Dictionary:
+	return shop_items
+
+func get_persistent_ecns() -> Array:
+	return ecns
+
+# Update the relationships handling
+func save_relationships() -> void:
+	var result = await import_all_data_from_file(relationships_path)
+	if result != ErrorCode.SUCCESS:
+		print("Error saving relationships: ", result)
+		return
+	print("Relationships saved successfully")
+
+func load_relationships() -> void:
+	var result = await export_all_data_to_file(relationships_path)
+	if result != ErrorCode.SUCCESS:
+		print("Error loading relationships: ", result)
+		return
+	
+	var file = FileAccess.open(relationships_path, FileAccess.READ)
+	if not file:
+		print("Error: Could not open relationships file")
+		return
+	
+	var json = JSON.parse_string(file.get_as_text())
+	if json == null:
+		print("Error: Invalid JSON in relationships file")
+		return
+	
+	relationships = json
+
+func save_data() -> void:
+	var result = await import_all_data_from_file("user://data.json")
+	if result != ErrorCode.SUCCESS:
+		print("Error saving data: ", result)
+		return
+	
+	print("Data saved successfully")

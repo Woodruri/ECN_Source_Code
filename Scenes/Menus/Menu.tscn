@@ -65,7 +65,7 @@ size_flags_vertical = 3
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_font_sizes/font_size = 35
 theme_override_styles/normal = SubResource("StyleBoxFlat_vgwe0")
-text = "Shop (Almost exists)"
+text = "Shop"
 
 [node name="CustomizeShipButton" type="Button" parent="VBoxContainer"]
 layout_mode = 2
@@ -73,7 +73,7 @@ size_flags_vertical = 3
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_font_sizes/font_size = 35
 theme_override_styles/normal = SubResource("StyleBoxFlat_vgwe0")
-text = "Customize Ship (It's definitely there)"
+text = "Customize Ship"
 
 [node name="OptionsButton" type="Button" parent="VBoxContainer"]
 layout_mode = 2

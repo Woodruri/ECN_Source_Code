@@ -4,3 +4,8 @@ Addons
 *.uid
 login*
 firebase*
+ngrok*
+*.db*
+*.cpython*
+*.gdshader
+*.tmp

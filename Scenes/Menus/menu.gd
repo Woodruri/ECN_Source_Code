@@ -33,3 +33,7 @@ func _on_options_button_pressed() -> void:
 #exit game
 func _on_exit_button_pressed() -> void:
 	get_tree().quit()
+
+
+func _on_data_import_button_pressed():
+	get_tree().change_scene_to_file("res://Scenes/Menus/data_import.tscn")

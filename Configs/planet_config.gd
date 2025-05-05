@@ -8,7 +8,7 @@ const PLANET_CONFIGS = [
         "posX": -800,
         "posY": 0,
         "scale": 4.0,
-        "texture": "planet",  # Base texture name in res://Textures/
+        "texture": "planet",
         "resource_cost": {
             "gas": 10,
             "scrap": 5
@@ -20,7 +20,7 @@ const PLANET_CONFIGS = [
         "posX": -400,
         "posY": 200,
         "scale": 4.5,
-        "texture": "planet_red",
+        "texture": "planet",
         "resource_cost": {
             "gas": 20,
             "scrap": 10
@@ -32,7 +32,7 @@ const PLANET_CONFIGS = [
         "posX": 0,
         "posY": -150,
         "scale": 5.0,
-        "texture": "planet_blue",
+        "texture": "planet",
         "resource_cost": {
             "gas": 30,
             "scrap": 15

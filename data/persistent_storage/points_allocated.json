@@ -1,1 +1,1 @@
-{"hblack2:ECN-000029":{"gbrown":100.0},"lorum:ECN-000001":{"lorumer":100.0}}
+{"hblack2:ECN-000029":{"gbrown":100.0},"lorum:ECN-000001":{"decay_rate":0.1,"decayed_points":100.0,"hours_taken":0.0,"max_points":100,"min_points":20,"points":{"lorumer":100.0}}}

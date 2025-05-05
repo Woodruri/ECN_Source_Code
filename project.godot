@@ -24,10 +24,6 @@ ServerDbHandler="*res://Scenes/DataScenes/server_db_handler.gd"
 
 window/subwindows/embed_subwindows=false
 
-[editor_plugins]
-
-enabled=PackedStringArray("res://addons/godot-sqlite/plugin.cfg")
-
 [rendering]
 
 textures/canvas_textures/default_texture_filter=0

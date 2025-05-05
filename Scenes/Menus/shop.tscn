@@ -47,32 +47,41 @@ theme_override_font_sizes/font_size = 16
 text = "Gas: 0 | Scrap: 0"
 horizontal_alignment = 2
 
-[node name="ShopContainer" type="VBoxContainer" parent="."]
+[node name="MainContainer" type="HBoxContainer" parent="."]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -250.0
+offset_left = -400.0
 offset_top = -180.0
-offset_right = 250.0
+offset_right = 400.0
 offset_bottom = 180.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_constants/separation = 20
+
+[node name="ShopContainer" type="PanelContainer" parent="MainContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MainContainer/ShopContainer"]
+layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="TabContainer" type="TabContainer" parent="ShopContainer"]
+[node name="TabContainer" type="TabContainer" parent="MainContainer/ShopContainer/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
 tab_alignment = 1
 current_tab = 0
 
-[node name="Cosmetics" type="Control" parent="ShopContainer/TabContainer"]
+[node name="Paint" type="Control" parent="MainContainer/ShopContainer/VBoxContainer/TabContainer"]
 layout_mode = 2
 metadata/_tab_index = 0
 
-[node name="CosmeticsList" type="ItemList" parent="ShopContainer/TabContainer/Cosmetics"]
+[node name="PaintList" type="ItemList" parent="MainContainer/ShopContainer/VBoxContainer/TabContainer/Paint"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -80,13 +89,14 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 size_flags_vertical = 3
+theme_override_font_sizes/font_size = 16
 
-[node name="Drones" type="Control" parent="ShopContainer/TabContainer"]
+[node name="Exhaust" type="Control" parent="MainContainer/ShopContainer/VBoxContainer/TabContainer"]
 visible = false
 layout_mode = 2
 metadata/_tab_index = 1
 
-[node name="DronesList" type="ItemList" parent="ShopContainer/TabContainer/Drones"]
+[node name="ExhaustList" type="ItemList" parent="MainContainer/ShopContainer/VBoxContainer/TabContainer/Exhaust"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -94,27 +104,97 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 size_flags_vertical = 3
+theme_override_font_sizes/font_size = 16
 
-[node name="DescriptionLabel" type="Label" parent="ShopContainer"]
+[node name="Wings" type="Control" parent="MainContainer/ShopContainer/VBoxContainer/TabContainer"]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 2
+
+[node name="WingsList" type="ItemList" parent="MainContainer/ShopContainer/VBoxContainer/TabContainer/Wings"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 16
+
+[node name="Drones" type="Control" parent="MainContainer/ShopContainer/VBoxContainer/TabContainer"]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 3
+
+[node name="DronesList" type="ItemList" parent="MainContainer/ShopContainer/VBoxContainer/TabContainer/Drones"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 16
+
+[node name="DescriptionLabel" type="Label" parent="MainContainer/ShopContainer/VBoxContainer"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
 text = "Select an item to see its description!"
 horizontal_alignment = 1
 autowrap_mode = 2
 
-[node name="BuyButton" type="Button" parent="ShopContainer"]
+[node name="ButtonContainer" type="HBoxContainer" parent="MainContainer/ShopContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="BuyButton" type="Button" parent="MainContainer/ShopContainer/VBoxContainer/ButtonContainer"]
+custom_minimum_size = Vector2(120, 40)
 layout_mode = 2
 size_flags_horizontal = 4
 disabled = true
 text = "Buy"
 
-[node name="BackButton" type="Button" parent="ShopContainer"]
+[node name="BackButton" type="Button" parent="MainContainer/ShopContainer/VBoxContainer/ButtonContainer"]
+custom_minimum_size = Vector2(120, 40)
 layout_mode = 2
 size_flags_horizontal = 4
 text = "Back"
 
-[connection signal="tab_changed" from="ShopContainer/TabContainer" to="." method="_on_tab_container_tab_changed"]
-[connection signal="item_selected" from="ShopContainer/TabContainer/Cosmetics/CosmeticsList" to="." method="_on_cosmetics_list_item_selected"]
-[connection signal="item_selected" from="ShopContainer/TabContainer/Drones/DronesList" to="." method="_on_drones_list_item_selected"]
-[connection signal="pressed" from="ShopContainer/BuyButton" to="." method="_on_buy_button_pressed"]
-[connection signal="pressed" from="ShopContainer/BackButton" to="." method="_on_back_button_pressed"]
+[node name="PreviewContainer" type="PanelContainer" parent="MainContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MainContainer/PreviewContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="PreviewArea" type="SubViewportContainer" parent="MainContainer/PreviewContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+stretch = true
+
+[node name="SubViewport" type="SubViewport" parent="MainContainer/PreviewContainer/VBoxContainer/PreviewArea"]
+handle_input_locally = false
+size = Vector2i(2, 2)
+render_target_update_mode = 4
+
+[node name="Background" type="ColorRect" parent="MainContainer/PreviewContainer/VBoxContainer/PreviewArea/SubViewport"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.0784314, 0.0784314, 0.0784314, 1)
+
+[node name="PreviewRocket" type="Node2D" parent="MainContainer/PreviewContainer/VBoxContainer/PreviewArea/SubViewport"]
+position = Vector2(150, 150)
+
+[connection signal="tab_changed" from="MainContainer/ShopContainer/VBoxContainer/TabContainer" to="." method="_on_tab_container_tab_changed"]
+[connection signal="item_selected" from="MainContainer/ShopContainer/VBoxContainer/TabContainer/Paint/PaintList" to="." method="_on_paint_list_item_selected"]
+[connection signal="item_selected" from="MainContainer/ShopContainer/VBoxContainer/TabContainer/Exhaust/ExhaustList" to="." method="_on_exhaust_list_item_selected"]
+[connection signal="item_selected" from="MainContainer/ShopContainer/VBoxContainer/TabContainer/Wings/WingsList" to="." method="_on_wings_list_item_selected"]
+[connection signal="item_selected" from="MainContainer/ShopContainer/VBoxContainer/TabContainer/Drones/DronesList" to="." method="_on_drones_list_item_selected"]
+[connection signal="pressed" from="MainContainer/ShopContainer/VBoxContainer/ButtonContainer/BuyButton" to="." method="_on_buy_button_pressed"]
+[connection signal="pressed" from="MainContainer/ShopContainer/VBoxContainer/ButtonContainer/BackButton" to="." method="_on_back_button_pressed"]
