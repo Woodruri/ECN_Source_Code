@@ -1,12 +1,19 @@
-import asyncio
-from database import engine, Base
-from models import User, Resources, GameState, Cosmetics, ShopItem, ECN, Relationship, PointsAllocation
+import sys
+import os
 
-async def init_db():
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-        await conn.run_sync(Base.metadata.create_all)
+# Add the project root to Python path
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(project_root)
 
-if __name__ == "__main__":
-    asyncio.run(init_db())
-    print("Database initialized successfully!") 
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from Database.models import User, Resource, GameState, Cosmetic, ShopItem, ECN, Relationship, PointsAllocation
+from Database.database import Base
+
+# Create database engine
+engine = create_engine('sqlite:///ecn_game.db')
+
+# Create all tables
+Base.metadata.create_all(engine)
+
+print("Database initialized successfully!") 

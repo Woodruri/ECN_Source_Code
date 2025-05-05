@@ -1,5 +1,5 @@
-from .database import engine, Base, SessionLocal
-from .models import User, Resource, GameState, Cosmetic, ShopItem, ECN, Relationship, PointsAllocation
+from Database.models import User, Resource, GameState, Cosmetic, ShopItem, ECN, Relationship, PointsAllocation
+from Database.database import Base, engine, get_db
 from .schemas import (
     UserBase, UserCreate, User as UserSchema,
     ResourceBase, ResourceCreate, Resource as ResourceSchema,
@@ -10,8 +10,8 @@ from .schemas import (
 )
 
 __all__ = [
-    'engine', 'Base', 'SessionLocal',
-    'User', 'Resource', 'GameState', 'Cosmetic', 'ShopItem', 'ECN', 'Relationship', 'PointsAllocation',
+    'User', 'Resource', 'GameState', 'Cosmetic', 'ShopItem', 'ECN', 
+    'Relationship', 'PointsAllocation', 'Base', 'engine', 'get_db',
     'UserBase', 'UserCreate', 'UserSchema',
     'ResourceBase', 'ResourceCreate', 'ResourceSchema',
     'GameStateBase', 'GameStateCreate', 'GameStateSchema',

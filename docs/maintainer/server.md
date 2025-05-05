@@ -18,7 +18,7 @@ pip install -r requirements.txt
 
 1. First, initialize the database:
 ```bash
-python init_db.py
+python Database/init_db.py
 ```
 
 2. Then start the server:
