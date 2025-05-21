@@ -3,6 +3,5 @@ uvicorn
 sqlalchemy
 aiosqlite
 pydantic
-python-dotenv
 requests
-python-multipart
+python-multipart 

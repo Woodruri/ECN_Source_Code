@@ -11,7 +11,7 @@
 #### Python Dependencies
 Install the required Python packages:
 ```bash
-pip install -r requirements.txt
+pip install -r Database/requirements.txt
 ```
 
 ### Running the Server
@@ -19,11 +19,13 @@ pip install -r requirements.txt
 1. First, initialize the database:
 ```bash
 python Database/init_db.py
+py Database/init_db.py
 ```
 
 2. Then start the server:
 ```bash
 python run_server.py
+ASMl: py run_server.py
 ```
 
 The server will:
@@ -34,7 +36,7 @@ The server will:
 
 You can verify the server is running by visiting:
 - `http://localhost:8000` - Should show "Server is running" message
-- `http://localhost:8000/docs` - Interactive API documentation (DNE atm)
+- `http://localhost:8000/docs` - Interactive API documentation
 
 ## How It Works
 
